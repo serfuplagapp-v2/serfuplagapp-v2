@@ -1,0 +1,106 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* ===========================================================================
+   Serfuplagapp v2 — Tema visual HEREDADO DE LA v1 (01_ARQUITECTURA_V2.md §2)
+   Tokens extraídos del CSS de la v1:
+     navy  #1B3A6B (primario) · navy oscuro #122850 · verde #1E6B3A
+     naranja #B85C00 · rojo #C0392B · grises #F5F6FA → #333640
+     fuente "Segoe UI, system-ui" · radios 10px y 6px · sombras suaves
+   NO inventar una paleta nueva.
+   =========================================================================== */
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Radio de borde: 10px en tarjetas (var base) y 6px derivado (radius-sm). */
+  --radius: 0.625rem; /* 10px */
+
+  /* Superficies y texto (grises de la v1) */
+  --background: #f5f6fa; /* gris claro de fondo de la app */
+  --foreground: #333640; /* gris oscuro de texto */
+  --card: #ffffff;
+  --card-foreground: #333640;
+  --popover: #ffffff;
+  --popover-foreground: #333640;
+
+  /* Primario = navy de la v1 */
+  --primary: #1b3a6b;
+  --primary-foreground: #ffffff;
+
+  /* Secundario / acentos suaves (tinte navy) */
+  --secondary: #eef1f6;
+  --secondary-foreground: #1b3a6b;
+  --muted: #eef1f6;
+  --muted-foreground: #6b7280;
+  --accent: #eef1f6;
+  --accent-foreground: #1b3a6b;
+
+  /* Estados */
+  --destructive: #c0392b; /* rojo v1 */
+  --destructive-foreground: #ffffff;
+  --success: #1e6b3a; /* verde v1 */
+  --success-foreground: #ffffff;
+  --warning: #b85c00; /* naranja v1 */
+  --warning-foreground: #ffffff;
+
+  /* Bordes, inputs y anillo de foco */
+  --border: #e2e5ec;
+  --input: #d5dae3;
+  --ring: #1b3a6b;
+
+  /* Colores de marca usados en la barra lateral (navy / navy oscuro v1) */
+  --navy: #1b3a6b;
+  --navy-dark: #122850;
+}
+
+@theme inline {
+  /* Tipografía: Segoe UI como en la v1, con respaldos del sistema. */
+  --font-sans: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial,
+    sans-serif;
+
+  /* Radios derivados (6px = radius-sm, como en la v1) */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Mapeo de tokens a colores de Tailwind/shadcn */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Colores de marca para utilidades como bg-navy / bg-navy-dark */
+  --color-navy: var(--navy);
+  --color-navy-dark: var(--navy-dark);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
