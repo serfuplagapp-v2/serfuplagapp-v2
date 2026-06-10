@@ -24,6 +24,17 @@
 
 - En Next.js 16 el antiguo `middleware.ts` se llama **`proxy.ts`** (corre en Node.js).
 
-**Pendiente (lo hace Carlos, guiado):** conectar el proyecto Supabase, crear el repo en
-la organización GitHub `serfuplagas`, desplegar en Vercel, aplicar la migración + seed,
-y asignarse como `owner`.
+**Desplegado y verificado (mismo día):**
+
+- App en vivo: **https://serfuplagapp-v2.vercel.app** (Vercel, equipo Hobby).
+- Repo: **`serfuplagapp-v2/serfuplagapp-v2`** (GitHub) — público (Vercel Hobby no despliega
+  repos privados de organización; revertir a privado + Vercel Pro a futuro). Los documentos
+  de planificación se quitaron del repo público (siguen locales y en OneDrive).
+- Supabase: proyecto `serfuplagapp-v2` (ref `dzlgdwtfqlxkibgyxnin`, región São Paulo);
+  migración 0001 + seed aplicados; empresa "Serfuplagas Ltda." creada; Carlos asignado
+  como `owner`. "Confirm email" DESACTIVADO temporalmente (reactivar antes de producción real).
+- **Criterios de cierre cumplidos:** (1) login OK desde celular y PC; (2) un usuario de
+  prueba fue rechazado con "cuenta no habilitada" → aislamiento por empresa verificado en
+  producción (corrige el bug "todos admin" de la v1).
+
+**Siguiente:** Fase 1 — Planificador (clientes, sucursales, técnicos, servicios, rutas).
