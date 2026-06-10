@@ -36,13 +36,15 @@ La **fuente de verdad** está en `docs/` (léela antes de escribir código):
   - Calendario semanal con filtro por técnico en `src/app/(protected)/agenda` (zona Chile vía `src/lib/datetime.ts`).
   - geocode_cache: sin acceso para `authenticated` (server-only); el mapa la usará vía service_role/función definer.
 
+- **Importación de datos reales (Firestore v1 → Supabase): HECHA y validada (10-jun).**
+  267 clientes, 540 sucursales, 434 contactos en producción (agrupados por RUT;
+  coordenadas heredadas de la v1). Herramientas en `migration/` (export/transform/load/verify,
+  Node + firebase-admin + pg). Migración **0003** agregó `branches.notes`. Detalle en HISTORIAL.
+  Pendiente menor de Carlos: 2 RUT sin DV (Educain, El Gran Corte), RUT de ABINGRAF, borrar test `dasda`.
+
 - **PENDIENTE (lo próximo):**
-  1. **Importar datos reales desde Firestore (v1)** — clientes/sucursales/contactos.
-     CLAVE: en la v1 las sucursales son clientes con `sucursal:true` → AGRUPAR bajo su casa
-     matriz. GATED: hay que acordar con Carlos cómo se enlazan sucursal↔casa matriz, cómo
-     sacar los datos (llave de servicio de Firebase + script export), y el alcance. Ver 03_MIGRACION.
-  2. **Mapa del planificador** (Google Maps, UNA instancia reutilizada, nunca destruir/recrear;
-     geocoding con cache en `geocode_cache`). SOLO después de la importación.
+  1. **Mapa del planificador** (Google Maps, UNA instancia reutilizada, nunca destruir/recrear;
+     geocoding con cache en `geocode_cache`). Las sucursales ya tienen lat/lng (535/540); solo 5 por geocodificar.
 
 - **Datos del entorno:** App en https://serfuplagapp-v2.vercel.app · Supabase project ref `dzlgdwtfqlxkibgyxnin`
   (org "Serfuplagas LTDA", región São Paulo) · GitHub `serfuplagapp-v2/serfuplagapp-v2` (público).

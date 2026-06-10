@@ -1,0 +1,14 @@
+{
+  "name": "serfuplagapp-v2-migration",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Herramientas de un solo uso para importar datos de la v1 (Firestore) a la v2 (Supabase). NO forma parte de la app que se despliega.",
+  "scripts": {
+    "diagnose": "node diagnose.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.2",
+    "pg": "^8.21.0"
+  }
+}

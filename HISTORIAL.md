@@ -63,3 +63,31 @@
 
 **Nota:** los nuevos campos comerciales que Carlos agregó al doc (OC puntual,
 movements con `pagado`, movement_services, factura consolidada) son **Fase 2**.
+
+## 2026-06-10 — Importación de datos reales (Firestore v1 → Supabase)
+
+**Qué se hizo:**
+
+- Herramientas de un solo uso en `migration/` (Node + firebase-admin + pg), fuera de la app:
+  `export.mjs` (descarga la v1, solo lectura), `transform.mjs` (mapea v1→v2 y genera vista
+  previa en JSON + CSV para revisar en Excel), `load.mjs` (carga transaccional) y
+  `verify.mjs` (validación). Claves y datos exportados quedan en carpetas ignoradas por git
+  (`Secretos/`, `migration/exports/`); nunca llegan al repo público.
+- **Diagnóstico (confirmado con los datos):** la v1 tiene 546 fichas de cliente (1 empresa).
+  Las sucursales se agrupan por **RUT compartido** + `sucursal:true`; las coordenadas
+  (lat/lng) ya venían pobladas en la v1, así que se traen y el mapa queda casi pre-hecho.
+- **Migración 0003:** se agregó el campo `notes` a `branches` para conservar datos por local
+  (frecuencia, días de visita, cartera, dirección tributaria, rubro…) que aún no tienen
+  pantalla propia. Aditiva y segura.
+- **Cargado y validado en producción:** 267 clientes, 540 sucursales, 434 contactos
+  (cuadre 546 = 540 + 6 excluidos; 0 sucursales huérfanas; 535/540 con coordenadas).
+  Los contactos repetidos en varias sucursales quedaron una sola vez a nivel cliente.
+- **Decisiones de Carlos aplicadas:** nombre de sucursal = fantasía + razón social; extras → Notas;
+  Educain se deja con sus 2 locales reales; matrices duplicadas (HMGS, María Guisela) fusionadas;
+  4 registros de prueba/basura excluidos; el "Tipo de cliente" no se importó (se agregará a futuro).
+
+**Pendiente menor (lo hace Carlos en la app):** corregir 2 RUT sin dígito verificador
+(Educain, El Gran Corte), agregar el RUT de ABINGRAF, y borrar el cliente de prueba `dasda`.
+
+**Siguiente:** Mapa del planificador (Google Maps) — ahora que las sucursales tienen
+dirección y coordenadas.

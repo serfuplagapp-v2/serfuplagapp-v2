@@ -41,6 +41,12 @@ yarn-error.log*
 
 # Carpeta local de claves/contraseñas — nunca subir al repositorio.
 /Claves/
+/Secretos/
+
+# Herramientas de migración: dependencias y, sobre todo, datos REALES de clientes
+# exportados desde la v1 — JAMÁS subir al repo público.
+/migration/node_modules/
+/migration/exports/
 
 # vercel
 .vercel
