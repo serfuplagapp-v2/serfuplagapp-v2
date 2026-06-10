@@ -38,3 +38,28 @@
   producción (corrige el bug "todos admin" de la v1).
 
 **Siguiente:** Fase 1 — Planificador (clientes, sucursales, técnicos, servicios, rutas).
+
+## 2026-06-10 — Fase 1: Planificador (en progreso)
+
+**Qué se construyó:**
+
+- **Migración 0002** (aplicada en producción): clientes, sucursales, contactos
+  (flags destinatario/CC/WhatsApp), tipos de servicio (6 sembrados), contratos
+  (con `oc_number`, `oc_file_path`, `billing_mode`), técnicos, servicios con
+  **DOS estados** (agenda_status + field_status, decisión de Carlos), tabla puente
+  service_technicians, rutas, route_stops, geocode_cache (server-only).
+- **Aislamiento reforzado:** FKs **compuestas con tenant_id** + `unique(tenant_id,id)`
+  → imposible enlazar registros entre empresas a nivel del motor (corrige un hallazgo
+  HIGH de la revisión adversarial de seguridad de Fase 1).
+- **CRUD de clientes/sucursales/contactos** con búsqueda y paginación EN SERVIDOR.
+- **Calendario semanal** de servicios con filtro por técnico (hora de Chile), estilo v1.
+- Navegación: Clientes y Agenda en el menú (con versión móvil).
+- Verificado en producción: páginas Clientes y Agenda cargan OK contra el nuevo esquema.
+
+**Pendiente (gated por confirmación de Carlos):**
+- Importación de datos reales desde Firestore (clientes/sucursales/contactos), con la
+  agrupación de sucursales (`sucursal:true`) bajo su casa matriz.
+- Mapa del planificador (Google Maps, UNA instancia) — DESPUÉS de la importación.
+
+**Nota:** los nuevos campos comerciales que Carlos agregó al doc (OC puntual,
+movements con `pagado`, movement_services, factura consolidada) son **Fase 2**.

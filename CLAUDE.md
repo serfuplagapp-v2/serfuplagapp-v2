@@ -22,10 +22,34 @@ La **fuente de verdad** está en `docs/` (léela antes de escribir código):
 - Mantener `HISTORIAL.md`. Ideas nuevas → `BACKLOG.md`, no implementarlas al vuelo.
 - Si una propuesta se desvía del stack de `01_ARQUITECTURA_V2.md`, la respuesta por defecto es **no**.
 
-## Estado
+## Estado (al 10-jun-2026)
 
-- **Fase 0 (fundaciones): completada.** Auth en español + migración tenants/profiles con RLS.
-- Siguiente: **Fase 1 — Planificador** (clientes, sucursales, servicios, rutas).
+- **Fase 0 (fundaciones): completada.** Auth en español + migración 0001 (tenants/profiles, RLS). Carlos = `owner` de "Serfuplagas Ltda.".
+- **Fase 1 (planificador): construida y desplegada (parcial).**
+  - Migración **0002** aplicada en producción: clients, branches, contacts (flags
+    destinatario/CC/WhatsApp), service_types (6 sembrados), contracts (con `oc_number`,
+    `oc_file_path`, `billing_mode`), technicians, services con **DOS estados**
+    (`agenda_status` + `field_status`), service_technicians, routes, route_stops, geocode_cache.
+  - **Aislamiento reforzado:** FKs COMPUESTAS con `tenant_id` + `unique(tenant_id,id)`
+    en los padres → imposible enlazar entre empresas (ver 04 decisión #9). Toda tabla nueva igual.
+  - CRUD de clientes/sucursales/contactos (búsqueda + paginación en servidor) en `src/app/(protected)/clientes`.
+  - Calendario semanal con filtro por técnico en `src/app/(protected)/agenda` (zona Chile vía `src/lib/datetime.ts`).
+  - geocode_cache: sin acceso para `authenticated` (server-only); el mapa la usará vía service_role/función definer.
+
+- **PENDIENTE (lo próximo):**
+  1. **Importar datos reales desde Firestore (v1)** — clientes/sucursales/contactos.
+     CLAVE: en la v1 las sucursales son clientes con `sucursal:true` → AGRUPAR bajo su casa
+     matriz. GATED: hay que acordar con Carlos cómo se enlazan sucursal↔casa matriz, cómo
+     sacar los datos (llave de servicio de Firebase + script export), y el alcance. Ver 03_MIGRACION.
+  2. **Mapa del planificador** (Google Maps, UNA instancia reutilizada, nunca destruir/recrear;
+     geocoding con cache en `geocode_cache`). SOLO después de la importación.
+
+- **Datos del entorno:** App en https://serfuplagapp-v2.vercel.app · Supabase project ref `dzlgdwtfqlxkibgyxnin`
+  (org "Serfuplagas LTDA", región São Paulo) · GitHub `serfuplagapp-v2/serfuplagapp-v2` (público).
+  La conexión a Supabase está en `.env.local` (local, no en el repo).
+- **Docs fuente de verdad** (en OneDrive y en `docs/` local): 01_ARQUITECTURA y 04_DICCIONARIO
+  ya reflejan las decisiones de Fase 1 (dos estados, FKs compuestas, campos de contrato).
+  Lo comercial (OC puntual, movements `pagado`, movement_services, factura consolidada) es **Fase 2**.
 
 ## Stack
 
