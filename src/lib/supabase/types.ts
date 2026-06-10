@@ -24,6 +24,13 @@ export type ServiceFieldStatus =
   | "terminada";
 export type RouteStatus = "planificada" | "en_curso" | "completada" | "cancelada";
 export type BillingMode = "por_servicio" | "mensual_consolidada";
+export type MovementType = "venta" | "cotizacion" | "nota_credito";
+export type MovementStatus =
+  | "cotizado"
+  | "aprobado"
+  | "facturado"
+  | "pagado"
+  | "rechazado";
 
 type Timestamps = { created_at: string; updated_at: string };
 
@@ -380,11 +387,102 @@ export interface Database {
         Update: { lat?: number | null; lng?: number | null };
         Relationships: [];
       };
+      movements: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          client_id: string | null;
+          contract_id: string | null;
+          date: string;
+          type: MovementType;
+          amount: number;
+          status: MovementStatus;
+          description: string | null;
+          client_name_raw: string | null;
+          dte_folio: string | null;
+          oc_number: string | null;
+          oc_file_path: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          client_id?: string | null;
+          contract_id?: string | null;
+          date: string;
+          type: MovementType;
+          amount: number;
+          status?: MovementStatus;
+          description?: string | null;
+          client_name_raw?: string | null;
+          dte_folio?: string | null;
+          oc_number?: string | null;
+          oc_file_path?: string | null;
+        };
+        Update: {
+          client_id?: string | null;
+          contract_id?: string | null;
+          date?: string;
+          type?: MovementType;
+          amount?: number;
+          status?: MovementStatus;
+          description?: string | null;
+          dte_folio?: string | null;
+          oc_number?: string | null;
+          oc_file_path?: string | null;
+        };
+        Relationships: [];
+      };
+      movement_services: {
+        Row: { tenant_id: string; movement_id: string; service_id: string };
+        Insert: { tenant_id: string; movement_id: string; service_id: string };
+        Update: { service_id?: string };
+        Relationships: [];
+      };
+      dte_documents: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          movement_id: string;
+          sii_type: number | null;
+          folio: string | null;
+          xml_path: string | null;
+          status: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          movement_id: string;
+          sii_type?: number | null;
+          folio?: string | null;
+          xml_path?: string | null;
+          status?: string | null;
+        };
+        Update: {
+          sii_type?: number | null;
+          folio?: string | null;
+          xml_path?: string | null;
+          status?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<never, never>;
     Functions: {
       current_tenant_id: { Args: Record<never, never>; Returns: string };
       current_user_role: { Args: Record<never, never>; Returns: UserRole };
+      movements_summary: {
+        Args: {
+          p_from?: string | null;
+          p_to?: string | null;
+          p_type?: string | null;
+          p_q?: string | null;
+        };
+        Returns: { total: number; n: number }[];
+      };
     };
     Enums: {
       user_role: UserRole;
@@ -394,6 +492,8 @@ export interface Database {
       service_field_status: ServiceFieldStatus;
       route_status: RouteStatus;
       billing_mode: BillingMode;
+      movement_type: MovementType;
+      movement_status: MovementStatus;
     };
     CompositeTypes: Record<never, never>;
   };
@@ -409,5 +509,6 @@ export type Contract = Tables["contracts"]["Row"];
 export type Technician = Tables["technicians"]["Row"];
 export type Service = Tables["services"]["Row"];
 export type Route = Tables["routes"]["Row"];
+export type Movement = Tables["movements"]["Row"];
 // Evitamos `Timestamps` sin usar (lo dejamos disponible para futuros tipos).
 export type WithTimestamps<T> = T & Timestamps;
