@@ -1,7 +1,6 @@
-import { Home } from "lucide-react";
-
 import { Brand } from "@/components/brand";
 import { SignOutButton } from "@/components/sign-out-button";
+import { MobileNav, SidebarNav } from "@/components/sidebar-nav";
 
 /**
  * Marco de la aplicación tras iniciar sesión: barra lateral navy (240px) y
@@ -25,14 +24,9 @@ export function AppShell({
         <div className="flex h-14 items-center px-5">
           <Brand tone="light" />
         </div>
-        <nav className="flex flex-col gap-1 px-3 py-4">
-          <span className="flex items-center gap-3 rounded-md bg-white/10 px-3 py-2 text-sm font-medium text-white">
-            <Home className="size-4" aria-hidden />
-            Inicio
-          </span>
-        </nav>
+        <SidebarNav />
         <div className="mt-auto px-5 py-4 text-xs text-white/50">
-          Serfuplagas Ltda.
+          {tenantName}
         </div>
       </aside>
 
@@ -57,6 +51,7 @@ export function AppShell({
             <SignOutButton />
           </div>
         </header>
+        <MobileNav />
         <main className="p-4 md:p-6">{children}</main>
       </div>
     </div>

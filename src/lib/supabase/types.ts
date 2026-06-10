@@ -1,13 +1,31 @@
 /**
  * Tipos de la base de datos para tipar el cliente de Supabase (sin `any`).
  *
- * Por ahora se escriben a mano (solo 2 tablas en Fase 0). A partir de la Fase 1,
- * cuando crezca el esquema, conviene generarlos automáticamente con:
+ * Escritos a mano. Cuando el esquema crezca más, conviene generarlos con:
  *   npx supabase gen types typescript --project-id <ID> > src/lib/supabase/types.ts
  *
  * Roles de usuario (01_ARQUITECTURA_V2.md §3).
  */
 export type UserRole = "owner" | "admin" | "tecnico" | "cliente_portal";
+export type ClientType = "residencial" | "empresa" | "institucional";
+export type ContractStatus = "vigente" | "terminado" | "suspendido";
+export type ServiceAgendaStatus =
+  | "propuesto"
+  | "programado"
+  | "enviado"
+  | "confirmado"
+  | "reprogramado"
+  | "cancelado";
+export type ServiceFieldStatus =
+  | "planificada"
+  | "asignada"
+  | "en_proceso"
+  | "por_validar"
+  | "terminada";
+export type RouteStatus = "planificada" | "en_curso" | "completada" | "cancelada";
+export type BillingMode = "por_servicio" | "mensual_consolidada";
+
+type Timestamps = { created_at: string; updated_at: string };
 
 export interface Database {
   public: {
@@ -26,16 +44,11 @@ export interface Database {
           name: string;
           rut?: string | null;
           plan?: string;
-          created_at?: string;
-          updated_at?: string;
         };
         Update: {
-          id?: string;
           name?: string;
           rut?: string | null;
           plan?: string;
-          created_at?: string;
-          updated_at?: string;
         };
         Relationships: [];
       };
@@ -55,42 +68,346 @@ export interface Database {
           full_name?: string | null;
           role?: UserRole | null;
           phone?: string | null;
-          created_at?: string;
-          updated_at?: string;
         };
         Update: {
-          id?: string;
           tenant_id?: string | null;
           full_name?: string | null;
           role?: UserRole | null;
           phone?: string | null;
-          created_at?: string;
-          updated_at?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: "profiles_tenant_id_fkey";
-            columns: ["tenant_id"];
-            referencedRelation: "tenants";
-            referencedColumns: ["id"];
-          },
-        ];
+        Relationships: [];
+      };
+      clients: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          name: string;
+          rut: string | null;
+          type: ClientType | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          name: string;
+          rut?: string | null;
+          type?: ClientType | null;
+          notes?: string | null;
+        };
+        Update: {
+          name?: string;
+          rut?: string | null;
+          type?: ClientType | null;
+          notes?: string | null;
+        };
+        Relationships: [];
+      };
+      branches: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          client_id: string;
+          name: string;
+          address: string | null;
+          lat: number | null;
+          lng: number | null;
+          geocoded_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          client_id: string;
+          name: string;
+          address?: string | null;
+          lat?: number | null;
+          lng?: number | null;
+          geocoded_at?: string | null;
+        };
+        Update: {
+          name?: string;
+          address?: string | null;
+          lat?: number | null;
+          lng?: number | null;
+          geocoded_at?: string | null;
+        };
+        Relationships: [];
+      };
+      contacts: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          client_id: string;
+          branch_id: string | null;
+          name: string;
+          role: string | null;
+          phone: string | null;
+          email: string | null;
+          es_destinatario: boolean;
+          es_cc: boolean;
+          recibe_whatsapp: boolean;
+          orden: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          client_id: string;
+          branch_id?: string | null;
+          name: string;
+          role?: string | null;
+          phone?: string | null;
+          email?: string | null;
+          es_destinatario?: boolean;
+          es_cc?: boolean;
+          recibe_whatsapp?: boolean;
+          orden?: number;
+        };
+        Update: {
+          branch_id?: string | null;
+          name?: string;
+          role?: string | null;
+          phone?: string | null;
+          email?: string | null;
+          es_destinatario?: boolean;
+          es_cc?: boolean;
+          recibe_whatsapp?: boolean;
+          orden?: number;
+        };
+        Relationships: [];
+      };
+      service_types: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          name: string;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          name: string;
+          active?: boolean;
+        };
+        Update: { name?: string; active?: boolean };
+        Relationships: [];
+      };
+      contracts: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          client_id: string;
+          service_type_id: string;
+          frequency: string | null;
+          current_price: number | null;
+          start_date: string | null;
+          end_date: string | null;
+          status: ContractStatus;
+          oc_number: string | null;
+          oc_file_path: string | null;
+          billing_mode: BillingMode;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          client_id: string;
+          service_type_id: string;
+          frequency?: string | null;
+          current_price?: number | null;
+          start_date?: string | null;
+          end_date?: string | null;
+          status?: ContractStatus;
+          oc_number?: string | null;
+          oc_file_path?: string | null;
+          billing_mode?: BillingMode;
+        };
+        Update: {
+          service_type_id?: string;
+          frequency?: string | null;
+          current_price?: number | null;
+          start_date?: string | null;
+          end_date?: string | null;
+          status?: ContractStatus;
+          oc_number?: string | null;
+          oc_file_path?: string | null;
+          billing_mode?: BillingMode;
+        };
+        Relationships: [];
+      };
+      technicians: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          profile_id: string | null;
+          full_name: string;
+          license_info: string | null;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          profile_id?: string | null;
+          full_name: string;
+          license_info?: string | null;
+          active?: boolean;
+        };
+        Update: {
+          profile_id?: string | null;
+          full_name?: string;
+          license_info?: string | null;
+          active?: boolean;
+        };
+        Relationships: [];
+      };
+      services: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          client_id: string;
+          branch_id: string | null;
+          contract_id: string | null;
+          service_type_id: string;
+          scheduled_at: string | null;
+          agenda_status: ServiceAgendaStatus;
+          field_status: ServiceFieldStatus;
+          notes: string | null;
+          completed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          client_id: string;
+          branch_id?: string | null;
+          contract_id?: string | null;
+          service_type_id: string;
+          scheduled_at?: string | null;
+          agenda_status?: ServiceAgendaStatus;
+          field_status?: ServiceFieldStatus;
+          notes?: string | null;
+          completed_at?: string | null;
+        };
+        Update: {
+          client_id?: string;
+          branch_id?: string | null;
+          contract_id?: string | null;
+          service_type_id?: string;
+          scheduled_at?: string | null;
+          agenda_status?: ServiceAgendaStatus;
+          field_status?: ServiceFieldStatus;
+          notes?: string | null;
+          completed_at?: string | null;
+        };
+        Relationships: [];
+      };
+      service_technicians: {
+        Row: { tenant_id: string; service_id: string; technician_id: string };
+        Insert: { tenant_id: string; service_id: string; technician_id: string };
+        Update: { technician_id?: string };
+        Relationships: [];
+      };
+      routes: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          technician_id: string | null;
+          date: string;
+          status: RouteStatus;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          technician_id?: string | null;
+          date: string;
+          status?: RouteStatus;
+        };
+        Update: {
+          technician_id?: string | null;
+          date?: string;
+          status?: RouteStatus;
+        };
+        Relationships: [];
+      };
+      route_stops: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          route_id: string;
+          service_id: string;
+          position: number;
+          eta: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          route_id: string;
+          service_id: string;
+          position?: number;
+          eta?: string | null;
+        };
+        Update: { position?: number; eta?: string | null };
+        Relationships: [];
+      };
+      geocode_cache: {
+        Row: {
+          address_hash: string;
+          address: string;
+          lat: number | null;
+          lng: number | null;
+          created_at: string;
+        };
+        Insert: {
+          address_hash: string;
+          address: string;
+          lat?: number | null;
+          lng?: number | null;
+        };
+        Update: { lat?: number | null; lng?: number | null };
+        Relationships: [];
       };
     };
     Views: Record<never, never>;
     Functions: {
-      current_tenant_id: {
-        Args: Record<never, never>;
-        Returns: string;
-      };
-      current_user_role: {
-        Args: Record<never, never>;
-        Returns: UserRole;
-      };
+      current_tenant_id: { Args: Record<never, never>; Returns: string };
+      current_user_role: { Args: Record<never, never>; Returns: UserRole };
     };
     Enums: {
       user_role: UserRole;
+      client_type: ClientType;
+      contract_status: ContractStatus;
+      service_agenda_status: ServiceAgendaStatus;
+      service_field_status: ServiceFieldStatus;
+      route_status: RouteStatus;
+      billing_mode: BillingMode;
     };
     CompositeTypes: Record<never, never>;
   };
 }
+
+// Atajos de tipos para usar en la app.
+type Tables = Database["public"]["Tables"];
+export type Client = Tables["clients"]["Row"];
+export type Branch = Tables["branches"]["Row"];
+export type Contact = Tables["contacts"]["Row"];
+export type ServiceType = Tables["service_types"]["Row"];
+export type Contract = Tables["contracts"]["Row"];
+export type Technician = Tables["technicians"]["Row"];
+export type Service = Tables["services"]["Row"];
+export type Route = Tables["routes"]["Row"];
+// Evitamos `Timestamps` sin usar (lo dejamos disponible para futuros tipos).
+export type WithTimestamps<T> = T & Timestamps;
