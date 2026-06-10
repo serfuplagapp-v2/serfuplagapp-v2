@@ -113,14 +113,7 @@ function buildNotes(d) {
   return bits.join(" · ");
 }
 
-function inferType(d) {
-  const s = `${txt(d.razon_social)} ${txt(d.empresa)} ${txt(d.rubro)} ${txt(d.giro)}`.toLowerCase();
-  if (/escuela|liceo|colegio|jard[ií]n|sala cuna|\bji\b|cesfam|sapu|cecosf|posta|hospital|cl[ií]nic|fundaci|corporaci|municipal|servicio de salud|servicio local|\bhogar\b|residencia|conapran|iglesia|ciudad del ni|centro educacional|centro cl[ií]nic|prevenci|seremi/.test(s))
-    return "institucional";
-  if (/casa particular|departamento|\bdepto\b|\bcasa\b|particular|\bsr[a]?\.|\bdon\b|do[ñn]a|vivienda|comunidad edificio|condominio/.test(s))
-    return "residencial";
-  return "empresa";
-}
+// (inferType se eliminó: el "Tipo de cliente" no se importa — decisión de Carlos.)
 
 // -----------------------------------------------------------------------------
 // 1) Excluir registros de prueba
