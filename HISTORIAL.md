@@ -91,3 +91,27 @@ movements con `pagado`, movement_services, factura consolidada) son **Fase 2**.
 
 **Siguiente:** Mapa del planificador (Google Maps) — ahora que las sucursales tienen
 dirección y coordenadas.
+
+## 2026-06-10 — Rendimiento + Mapa de sucursales
+
+**Rendimiento (resuelto):** las páginas con sesión demoraban varios segundos. Causa: las
+funciones de Vercel corrían en `iad1` (Washington) y la base en `gru1` (São Paulo) → ~6 viajes
+EE.UU.↔Brasil por página. La base responde en 0.3 ms (no era la consulta). Fix: `vercel.json`
+con `"regions":["gru1"]` → servidor junto a la base. Verificado (`X-Vercel-Id` pasó a `gru1::gru1`).
+Carlos confirmó la mejora.
+
+**Mapa de sucursales (HECHO y en vivo):**
+
+- Nuevo módulo **`/mapa`**: carga el SDK de Google Maps una sola vez
+  (`@vis.gl/react-google-maps`), muestra todas las sucursales con coordenadas como **pines
+  AGRUPADOS** (`@googlemaps/markerclusterer`); clic en un pin abre la sucursal/cliente con
+  enlace a su ficha. Replica patrones probados de la v1 (`core/googlemaps.js`, `data/geocoder.js`):
+  una instancia sin recrear, geocodificación con el SDK del navegador (las llaves restringidas por
+  referrer no sirven por REST), limpieza de dirección y validación de comuna, rate-limit ~10/s.
+- **Llave Google Maps:** se reutilizó la de la v1 ("Serfuplagapp - Google Maps") agregándole el
+  dominio v2 y `localhost` a sus referrers; vive en `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
+  (Vercel + `.env.local`, nunca en el repo). El proyecto GCP lo administra `serfuplagapp@gmail.com`.
+- Verificado en producción: el mapa carga centrado en Chile con los pines agrupados (Santiago ~510)
+  y la ficha emergente funciona.
+
+**Siguiente:** geocodificar las 5 sucursales sin coordenadas e integrar el mapa a la Agenda para rutas.

@@ -42,9 +42,15 @@ La **fuente de verdad** está en `docs/` (léela antes de escribir código):
   Node + firebase-admin + pg). Migración **0003** agregó `branches.notes`. Detalle en HISTORIAL.
   Pendiente menor de Carlos: 2 RUT sin DV (Educain, El Gran Corte), RUT de ABINGRAF, borrar test `dasda`.
 
+- **Mapa de sucursales: HECHO y en vivo (10-jun).** Módulo `/mapa` con pines AGRUPADOS
+  (`@vis.gl/react-google-maps` + `@googlemaps/markerclusterer`), clic → InfoWindow + enlace a la ficha.
+  Llave Google Maps (la misma de la v1) en env `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`; el proyecto GCP
+  `serfuplagapp-e436d` lo administra la cuenta **serfuplagapp@gmail.com**. Detalle en HISTORIAL.
+
 - **PENDIENTE (lo próximo):**
-  1. **Mapa del planificador** (Google Maps, UNA instancia reutilizada, nunca destruir/recrear;
-     geocoding con cache en `geocode_cache`). Las sucursales ya tienen lat/lng (535/540); solo 5 por geocodificar.
+  1. Geocodificar las **5 sucursales sin coordenadas** (geocoder cliente con SDK + guardar en branch).
+  2. Integrar el mapa a la **Agenda** para rutas de técnicos (optimizar ruta + Routes API; ver patrones v1).
+  3. Arreglos menores de Carlos en datos: 2 RUT sin DV (Educain, El Gran Corte), RUT de ABINGRAF, borrar test `dasda`.
 
 - **Datos del entorno:** App en https://serfuplagapp-v2.vercel.app · Supabase project ref `dzlgdwtfqlxkibgyxnin`
   (org "Serfuplagas LTDA", región São Paulo) · GitHub `serfuplagapp-v2/serfuplagapp-v2` (público).
