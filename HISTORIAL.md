@@ -115,3 +115,28 @@ Carlos confirmó la mejora.
   y la ficha emergente funciona.
 
 **Siguiente:** geocodificar las 5 sucursales sin coordenadas e integrar el mapa a la Agenda para rutas.
+
+## 2026-06-10 — Fase 2: Módulo Comercial
+
+**Decisión:** Carlos descartó importar el Excel histórico "Informe Diario 2026"
+(~9.153 filas, 2021–2026). En vez de migrar historia vieja, el módulo se usa para
+**registrar movimientos directo en la app de aquí en adelante** (criterio de cierre
+de la fase). Tooling de Excel quedó disponible por si se reutiliza (bancos, etc.).
+
+**Qué se construyó:**
+
+- **Migración 0004:** `movements` (flujo cotizado→aprobado→facturado→pagado / rechazado;
+  type venta|cotizacion|nota_credito; NC en negativo; OC; client_id/contract_id nullable),
+  `movement_services` (factura consolidada) y `dte_documents` (DTE). RLS + FKs compuestas
+  con tenant_id, igual que Fase 1.
+- **Migración 0005:** función `movements_summary(from,to,type,q)` que suma/cuenta en el
+  servidor respetando la RLS (totales del filtro y del dashboard, sin traer filas al cliente).
+- **Módulo `/comercial`:** dashboard (ventas del mes, mes anterior con %, total histórico),
+  lista con filtros (mes / tipo / búsqueda), total del filtro y paginación en servidor, y
+  formulario `/comercial/nuevo` para registrar un movimiento (selector con los clientes
+  cargados; la nota de crédito se guarda con monto negativo automáticamente).
+- Tipos comerciales agregados a `types.ts`. Verificado en producción (módulo carga, dashboard
+  en $0, formulario con los 267 clientes).
+
+**Siguiente:** Carlos empieza a registrar movimientos (cierre de Fase 2). Luego: geocodificar
+las 5 sucursales sin coordenadas y mapa-en-Agenda; más adelante Fase 3 (terreno).

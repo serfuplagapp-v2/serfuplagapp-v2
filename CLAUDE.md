@@ -47,10 +47,19 @@ La **fuente de verdad** está en `docs/` (léela antes de escribir código):
   Llave Google Maps (la misma de la v1) en env `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`; el proyecto GCP
   `serfuplagapp-e436d` lo administra la cuenta **serfuplagapp@gmail.com**. Detalle en HISTORIAL.
 
+- **Fase 2 (Comercial): módulo construido y en vivo (10-jun).** Migraciones **0004**
+  (movements, movement_services, dte_documents — RLS + FKs compuestas) y **0005**
+  (función `movements_summary` para totales en servidor). Módulo `/comercial`: dashboard
+  (ventas mes / mes anterior / total), lista con filtros (mes/tipo/búsqueda) + totales +
+  paginación, y formulario para registrar movimientos (NC con monto negativo automático).
+  **DECISIÓN Carlos:** NO se importa el Excel histórico "Informe Diario" — se registra
+  directo en la app de aquí en adelante. Cierre de fase = Carlos usándolo en la operación real.
+
 - **PENDIENTE (lo próximo):**
-  1. Geocodificar las **5 sucursales sin coordenadas** (geocoder cliente con SDK + guardar en branch).
-  2. Integrar el mapa a la **Agenda** para rutas de técnicos (optimizar ruta + Routes API; ver patrones v1).
+  1. Que Carlos empiece a registrar movimientos en `/comercial` (cierre de Fase 2).
+  2. Geocodificar las **5 sucursales sin coordenadas**; integrar el mapa a la **Agenda** (rutas, patrones v1).
   3. Arreglos menores de Carlos en datos: 2 RUT sin DV (Educain, El Gran Corte), RUT de ABINGRAF, borrar test `dasda`.
+  4. Más adelante (no ahora): Fase 3 (terreno: productos/estaciones/certificados).
 
 - **Datos del entorno:** App en https://serfuplagapp-v2.vercel.app · Supabase project ref `dzlgdwtfqlxkibgyxnin`
   (org "Serfuplagas LTDA", región São Paulo) · GitHub `serfuplagapp-v2/serfuplagapp-v2` (público).
