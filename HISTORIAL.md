@@ -159,6 +159,21 @@ Planificador** → Terreno/certificados → SII/Portal → CRM/cartola/RR.HH./IA
   (`visit_mode`, `visit_params`, `allowed_days`, `preferred_time`) para que el
   generador sepa exactamente cuándo cae cada visita.
 
-**Siguiente:** importar la historia desde el 1-may (programas_servicio→contracts,
-ordenes_trabajo→services) con vista previa para revisar (huérfanos, cuadre), y
-wirear el generador de servicios + el calendario (drag&drop + ruta del día).
+**Importación de historia desde 1-may (HECHA y verificada en producción):**
+
+- **Migración 0007:** `legacy_id` en clients/branches/contracts/services (enlace a la
+  v1, sin huérfanos) + `services.legacy_data` (jsonb) para **preservar la data de
+  certificados** (folio, plagas detectadas, productos, áreas, firmante, metodología…).
+- Tooling en `migration/`: diagnose-ot, import-ot-preview (vista previa CSV), load-ot
+  (carga transaccional), verify-ot.
+- **Cargado:** 135 contratos (desde programas activos) + **1.238 servicios** (OT con
+  `fecha_programada` ≥ 1-may-2026), enlazados a clientes/sucursales por `legacy_id`
+  (540/540 sucursales mapeadas). 13 OT huérfanas + 2 programas sin cliente omitidos
+  (cuadre 1.238+13 = 1.251 ✅).
+- **Dos estados mapeados** desde la v1: `estado_cal`→`agenda_status`,
+  `estado_op`→`field_status`. La Agenda v2 ya muestra la operación real (may-2026 → may-2027).
+- **Folio de certificados preservado** (máx 30.696) → en Fase 3 los certificados
+  continúan desde 30.697, con toda la data en `services.legacy_data`.
+
+**Siguiente:** wirear el generador de servicios (motor 0006) + completar el calendario
+(drag&drop, ruta del día), y seguir el roadmap de paridad (Terreno/certificados, etc.).
