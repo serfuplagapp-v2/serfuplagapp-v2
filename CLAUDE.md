@@ -55,15 +55,46 @@ La **fuente de verdad** está en `docs/` (léela antes de escribir código):
   **DECISIÓN Carlos:** NO se importa el Excel histórico "Informe Diario" — se registra
   directo en la app de aquí en adelante. Cierre de fase = Carlos usándolo en la operación real.
 
-- **PENDIENTE (lo próximo):**
-  1. Que Carlos empiece a registrar movimientos en `/comercial` (cierre de Fase 2).
-  2. Geocodificar las **5 sucursales sin coordenadas**; integrar el mapa a la **Agenda** (rutas, patrones v1).
-  3. Arreglos menores de Carlos en datos: 2 RUT sin DV (Educain, El Gran Corte), RUT de ABINGRAF, borrar test `dasda`.
-  4. Más adelante (no ahora): Fase 3 (terreno: productos/estaciones/certificados).
+- **DECISIÓN (10-jun): PARIDAD TOTAL v1→v2 + mantener la historia desde el 1-may-2026.**
+  La v1 es un ERP completo de control de plagas. Revisión en detalle + roadmap de porte en
+  **`docs/06_REVISION_V1_PORTE.md`**. Orden acordado: cerrar Fase 2 (uso) → **completar el
+  Planificador** → Terreno/certificados (Fase 3) → SII/Portal (Fase 4) → CRM/cartola/RR.HH./IA-UV.
+
+- **Planificador (EN CURSO — cierre real de Fase 1):**
+  - **Motor de agendamiento PORTADO** de la v1 → `src/lib/scheduling.ts` (periodicidades,
+    modos de visita, feriados chilenos; funciones puras). Migración **0006**: `visit_mode`,
+    `visit_params`, `allowed_days`, `preferred_time` en `contracts`.
+  - **Historia desde 1-may IMPORTADA** (migración **0007**: `legacy_id` en
+    clients/branches/contracts/services + `services.legacy_data` jsonb). Cargados
+    **135 contratos + 1.238 servicios** (órdenes con `fecha_programada` ≥ 1-may), enlazados por
+    `legacy_id` (540/540 sucursales). Dos estados mapeados (estado_cal→agenda, estado_op→field).
+    **Data de certificados PRESERVADA en `services.legacy_data`** (folio, plagas, productos,
+    áreas, firmante…); folio máx **30696** → los certificados (Fase 3) continúan desde **30697**.
+  - Tooling: `migration/diagnose-ot.mjs`, `import-ot-preview.mjs`, `load-ot.mjs`, `verify-ot.mjs`.
+    Migraciones se aplican con `node migration/apply-sql.mjs <archivo.sql>` (conexión en `Secretos/db.txt`).
+
+- **PENDIENTE (lo próximo, en orden):**
+  1. **Wirear el generador automático**: usar `src/lib/scheduling.ts` para generar `services`
+     con `agenda_status='propuesto'` desde los `contracts` (con su visit_mode/params), + UI para aprobarlos.
+  2. **Completar el calendario** (`/agenda`): drag&drop entre fechas/técnicos + **ruta del día** sobre
+     el mapa (reusar `data/geocoder.js` optimizarRuta + Routes API de la v1).
+  3. **Fase 3 — Terreno/certificados**: tablas products/certificates/layouts/stations/station_checks;
+     generar el certificado PDF con folio correlativo desde **30697** usando la data en `services.legacy_data`.
+  4. Seguir el roadmap de paridad (SII/Portal, CRM, cartola, RR.HH., IA-UV — ver `docs/06`).
+  5. **Limpiezas de Carlos:** borrar test `dasda` + clientes duplicados (Globe ×3, El Gran Corte ×2…),
+     2 RUT sin DV (Educain, El Gran Corte), RUT de ABINGRAF; geocodificar 5 sucursales sin coords;
+     registrar movimientos en `/comercial` (cierre Fase 2).
 
 - **Datos del entorno:** App en https://serfuplagapp-v2.vercel.app · Supabase project ref `dzlgdwtfqlxkibgyxnin`
   (org "Serfuplagas LTDA", región São Paulo) · GitHub `serfuplagapp-v2/serfuplagapp-v2` (público).
-  La conexión a Supabase está en `.env.local` (local, no en el repo).
+  La conexión de la app a Supabase está en `.env.local` (local, no en el repo).
+- **Secretos (carpeta `Secretos/`, IGNORADA por git — nunca subir):** `db.txt` = conexión Postgres
+  para migraciones/imports (pooler **aws-1-sa-east-1**, no el host directo `db.<ref>` que no resuelve);
+  `firebase-v1.json` = llave de servicio de Firebase v1 (solo lectura); `maps.txt` = llave Google Maps.
+- **Rendimiento:** funciones de Vercel fijadas en **gru1 (São Paulo)** vía `vercel.json` (la base está ahí
+  también). El proyecto GCP `serfuplagapp-e436d` lo administra la cuenta Google **serfuplagapp@gmail.com**.
+- **Migración v1→v2:** la v1 (código vanilla JS) está en
+  `OneDrive\...\CARPETA COMPARTIDA SERFUPLAGAS\027_APP\Cowork`. Patrones a portar en `docs/06_REVISION_V1_PORTE.md`.
 - **Docs fuente de verdad** (en OneDrive y en `docs/` local): 01_ARQUITECTURA y 04_DICCIONARIO
   ya reflejan las decisiones de Fase 1 (dos estados, FKs compuestas, campos de contrato).
   Lo comercial (OC puntual, movements `pagado`, movement_services, factura consolidada) es **Fase 2**.
