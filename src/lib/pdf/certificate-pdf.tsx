@@ -10,23 +10,32 @@ import {
 } from "@react-pdf/renderer";
 
 import { fechaLarga, type CertificateView } from "@/lib/cert-view";
+import { LOGO_DATA_URL } from "./logo";
 
 /**
- * PDF del certificado — réplica de la hoja imprimible de /terreno/[id]
- * (que a su vez replica la plantilla v1). Se genera EN EL SERVIDOR con
- * @react-pdf/renderer (sin navegador), por eso sirve para guardarlo en
- * Storage y adjuntarlo a correos.
+ * PDF del certificado — formato de la v1 (modulos/informes/templates_v2.js,
+ * renderCertificadoHTML): encabezado con datos legales + logo, folio dentro de
+ * "Identificación del inmueble", fechas servicio/inicio/vigencia, productos
+ * con columna Concentración, observaciones por defecto de Configuración
+ * SIEMPRE primero, pie con contacto + leyenda legal + QR "Verificar documento".
+ * Colores configurables (tenant_settings.data: pdf_color_primario / acento).
  *
- * Nota de unidades: react-pdf usa puntos (pt). Los tamaños del HTML (px) se
- * convirtieron con ×0.75 para que la hoja A4 se vea igual que impresa.
+ * Nota de unidades: react-pdf usa puntos (pt); los px del HTML van ×0.75.
  */
 
-const NAVY = "#1B3A6B";
 const INK = "#1A1F2C";
 const GRAY = "#4A5061";
 const LABEL = "#8B8F9B";
 const BEIGE = "#F7F5EF";
 const BORDER = "#D9DCE3";
+
+// Sub-etiquetas de la tabla de productos por tratamiento (v1).
+const SUB_LABEL: Record<string, string> = {
+  desratización: "Desratización — Rodenticidas / Cebos",
+  desinsectación: "Desinsectación — Productos químicos",
+  sanitización: "Sanitización — Productos",
+  aromatización: "Aromatización — Productos",
+};
 
 const s = StyleSheet.create({
   page: {
@@ -34,38 +43,26 @@ const s = StyleSheet.create({
     fontSize: 8.5,
     color: INK,
     paddingTop: 24,
-    paddingBottom: 28,
+    paddingBottom: 88, // reserva el espacio del pie fijo
     paddingHorizontal: 24,
   },
-  // Encabezado
+  // Encabezado: empresa | título | logo (v1)
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     borderBottomWidth: 3,
-    borderBottomColor: NAVY,
     paddingBottom: 10,
+    gap: 10,
   },
-  legalName: { fontSize: 10, fontFamily: "Helvetica-Bold", marginBottom: 2 },
-  legalLine: { fontSize: 8, marginBottom: 1 },
-  resSan: { fontSize: 8, marginTop: 3, fontFamily: "Helvetica-Bold" },
-  title: { fontSize: 18, fontFamily: "Helvetica-Bold", color: NAVY, textAlign: "right", letterSpacing: 1 },
-  subtitle: { fontSize: 8, color: GRAY, textAlign: "right", marginTop: 1 },
-  folioBox: {
-    marginTop: 6,
-    alignSelf: "flex-end",
-    borderWidth: 1.5,
-    borderColor: NAVY,
-    borderRadius: 6,
-    paddingVertical: 3,
-    paddingHorizontal: 12,
-    alignItems: "center",
-  },
-  folioLabel: { fontSize: 7, color: GRAY, textTransform: "uppercase", letterSpacing: 0.5 },
-  folioNum: { fontSize: 15, fontFamily: "Helvetica-Bold", color: NAVY },
+  legalName: { fontSize: 9.5, fontFamily: "Helvetica-Bold", marginBottom: 2 },
+  legalLine: { fontSize: 7.5, marginBottom: 1, color: GRAY },
+  title: { fontSize: 17, fontFamily: "Helvetica-Bold", letterSpacing: 1, textAlign: "center" },
+  subtitle: { fontSize: 8, color: GRAY, textAlign: "center", marginTop: 2 },
+  logoBox: { width: 110, alignItems: "flex-end" },
+  logoImg: { width: 100, objectFit: "contain" },
   // Secciones
   sectionHdr: {
-    backgroundColor: NAVY,
     color: "#FFFFFF",
     fontSize: 8,
     fontFamily: "Helvetica-Bold",
@@ -84,11 +81,21 @@ const s = StyleSheet.create({
     color: LABEL,
     marginBottom: 1.5,
   },
-  twoCols: { flexDirection: "row", gap: 16 },
+  cols: { flexDirection: "row", gap: 16 },
   col: { flex: 1 },
   bold: { fontFamily: "Helvetica-Bold" },
   gray: { fontSize: 8.5, color: GRAY },
   body: { fontSize: 9 },
+  // Celda del folio (fila de identificación, v1)
+  folioCell: {
+    width: 86,
+    borderWidth: 1.5,
+    borderRadius: 6,
+    paddingVertical: 4,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  folioNum: { fontSize: 15, fontFamily: "Helvetica-Bold" },
   // Fechas
   datesRow: { flexDirection: "row", gap: 6, marginTop: 12 },
   dateBox: {
@@ -99,11 +106,9 @@ const s = StyleSheet.create({
     paddingVertical: 5,
     alignItems: "center",
   },
-  dateBoxMain: { borderWidth: 1.5, borderColor: NAVY, backgroundColor: "#F0F3F8" },
   // Chips
-  chipsRow: { flexDirection: "row", flexWrap: "wrap" },
+  chipsRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center" },
   chip: {
-    backgroundColor: NAVY,
     color: "#FFFFFF",
     fontSize: 8,
     borderRadius: 8,
@@ -124,26 +129,32 @@ const s = StyleSheet.create({
     marginRight: 4,
     marginBottom: 4,
   },
-  // Tabla de productos
-  th: {
-    flexDirection: "row",
-    backgroundColor: NAVY,
-  },
-  thCell: {
-    color: "#FFFFFF",
+  // Tabla de productos (v1: incluye Concentración)
+  subHdr: {
     fontSize: 7.5,
     fontFamily: "Helvetica-Bold",
+    color: GRAY,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    marginBottom: 3,
+  },
+  th: { flexDirection: "row" },
+  thCell: {
+    color: "#FFFFFF",
+    fontSize: 7,
+    fontFamily: "Helvetica-Bold",
     paddingVertical: 3,
-    paddingHorizontal: 5,
+    paddingHorizontal: 4,
   },
   tr: { flexDirection: "row", borderBottomWidth: 0.75, borderBottomColor: BORDER },
-  td: { fontSize: 7.5, paddingVertical: 3, paddingHorizontal: 5 },
-  cNombre: { width: "24%" },
-  cIsp: { width: "14%" },
-  cForm: { width: "14%" },
-  cIngr: { width: "22%" },
-  cDosis: { width: "13%" },
-  cCant: { width: "13%" },
+  td: { fontSize: 7, paddingVertical: 3, paddingHorizontal: 4 },
+  cNombre: { width: "20%" },
+  cIsp: { width: "12%" },
+  cForm: { width: "13%" },
+  cIngr: { width: "20%" },
+  cConc: { width: "12%" },
+  cDosis: { width: "12%" },
+  cCant: { width: "11%" },
   // Observaciones
   obsBox: {
     borderWidth: 1,
@@ -155,22 +166,24 @@ const s = StyleSheet.create({
     lineHeight: 1.45,
   },
   // Firma
-  signWrap: { alignItems: "center", marginTop: 22 },
-  signBox: { width: 190, alignItems: "center" },
+  signWrap: { alignItems: "center", marginTop: 18 },
+  signBox: { width: 180, alignItems: "center" },
   signArea: {
     height: 58,
-    width: 190,
+    width: 180,
     justifyContent: "flex-end",
     alignItems: "center",
     borderBottomWidth: 1,
     borderBottomColor: INK,
   },
-  signImg: { maxHeight: 56, maxWidth: 180, objectFit: "contain" },
-  // Pie
+  signImg: { maxHeight: 56, maxWidth: 170, objectFit: "contain" },
+  // Pie (v1: texto izquierda, QR derecha) — FIJO al borde inferior de cada página
   footer: {
-    marginTop: 20,
+    position: "absolute",
+    bottom: 22,
+    left: 24,
+    right: 24,
     borderTopWidth: 1.5,
-    borderTopColor: NAVY,
     paddingTop: 8,
     flexDirection: "row",
     gap: 10,
@@ -190,12 +203,26 @@ export interface CertificatePdfOptions {
   view: CertificateView;
   /** Código QR (data URL PNG) que apunta a la página pública de verificación. */
   qrDataUrl: string | null;
-  /** URL pública de verificación (se imprime también como texto). */
+  /** URL pública de verificación (referencia; el QR la lleva embebida). */
   verifyUrl: string;
 }
 
-function CertificateDoc({ view: v, qrDataUrl, verifyUrl }: CertificatePdfOptions) {
+function CertificateDoc({ view: v, qrDataUrl }: CertificatePdfOptions) {
   const e = v.empresa;
+  const P = e.colorPrimario; // color primario configurable (v1)
+
+  // Observaciones: el texto por defecto de Configuración SIEMPRE primero (v1).
+  const obsCfg = [e.obsDefault, e.recsDefault].filter(Boolean).join(" ").trim();
+  const obsCert = v.observaciones.trim();
+  const recsCert = v.recomendaciones.trim();
+
+  // Productos: los de la v2 no traen vínculo a tratamiento → todos bajo el
+  // primer tratamiento, con su sub-etiqueta v1.
+  const primerServicio = (v.servicios[0] ?? "").toLowerCase().trim();
+  const subLabel = v.servicios.length
+    ? (SUB_LABEL[primerServicio] ?? `${v.servicios[0]} — Productos`)
+    : "Productos utilizados";
+
   return (
     <Document
       title={`Certificado N° ${v.folio}`}
@@ -203,29 +230,28 @@ function CertificateDoc({ view: v, qrDataUrl, verifyUrl }: CertificatePdfOptions
       subject="Certificado de Control de Plagas e Higiene Ambiental"
     >
       <Page size="A4" style={s.page}>
-        {/* Encabezado */}
-        <View style={s.header}>
-          <View style={{ maxWidth: 300 }}>
+        {/* Encabezado: empresa | CERTIFICADO | logo (v1) */}
+        <View style={[s.header, { borderBottomColor: P }]}>
+          <View style={{ width: 190 }}>
             <Text style={s.legalName}>{e.nombreLegal}</Text>
             <Text style={s.legalLine}>RUT: {e.rut}</Text>
+            {e.tel ? <Text style={s.legalLine}>Tel: {e.tel}</Text> : null}
             <Text style={s.legalLine}>{e.direccion}</Text>
-            <Text style={s.legalLine}>{e.correo}</Text>
-            <Text style={s.resSan}>Res. Sanitaria {e.resSan} · SEREMI de Salud R.M.</Text>
+            <Text style={s.legalLine}>Res. Sanitaria {e.resSan} · SEREMI de Salud R.M.</Text>
             {e.repLegal ? <Text style={s.legalLine}>Representante: {e.repLegal}</Text> : null}
           </View>
-          <View>
-            <Text style={s.title}>CERTIFICADO</Text>
+          <View style={{ flex: 1, justifyContent: "center", paddingTop: 6 }}>
+            <Text style={[s.title, { color: P }]}>CERTIFICADO</Text>
             <Text style={s.subtitle}>Control de Plagas e Higiene Ambiental</Text>
-            <View style={s.folioBox}>
-              <Text style={s.folioLabel}>Folio N°</Text>
-              <Text style={s.folioNum}>{String(v.folio)}</Text>
-            </View>
+          </View>
+          <View style={s.logoBox}>
+            <Image src={LOGO_DATA_URL} style={s.logoImg} />
           </View>
         </View>
 
-        {/* Identificación del inmueble */}
-        <Text style={s.sectionHdr}>Identificación del inmueble</Text>
-        <View style={s.twoCols}>
+        {/* Identificación del inmueble (con celda de folio, v1) */}
+        <Text style={[s.sectionHdr, { backgroundColor: P }]}>Identificación del inmueble</Text>
+        <View style={s.cols}>
           <View style={s.col}>
             <Lbl>Cliente / Sucursal</Lbl>
             <Text style={[s.body, s.bold]}>{v.clienteNombre || "—"}</Text>
@@ -237,13 +263,17 @@ function CertificateDoc({ view: v, qrDataUrl, verifyUrl }: CertificatePdfOptions
             <Text style={[s.body, s.bold]}>{v.plagas.length ? v.plagas.join(", ") : "Sin evidencia"}</Text>
             {v.grado ? <Text style={s.gray}>Grado de infestación: {v.grado}</Text> : null}
           </View>
+          <View style={[s.folioCell, { borderColor: P }]}>
+            <Lbl>Folio N°</Lbl>
+            <Text style={[s.folioNum, { color: P }]}>{String(v.folio)}</Text>
+          </View>
         </View>
 
         {/* Datos del servicio */}
-        <Text style={s.sectionHdr}>Datos del servicio</Text>
-        <View style={s.twoCols}>
+        <Text style={[s.sectionHdr, { backgroundColor: P }]}>Datos del servicio</Text>
+        <View style={s.cols}>
           <View style={s.col}>
-            <Lbl>Persona que recibe el servicio</Lbl>
+            <Lbl>Persona que solicitó el trabajo</Lbl>
             <Text style={[s.body, s.bold]}>{v.titular || "—"}</Text>
             {v.rutFirmante ? <Text style={s.gray}>RUT: {v.rutFirmante}</Text> : null}
             {v.correoFirmante ? <Text style={s.gray}>{v.correoFirmante}</Text> : null}
@@ -252,37 +282,39 @@ function CertificateDoc({ view: v, qrDataUrl, verifyUrl }: CertificatePdfOptions
             <Lbl>Identificación del propietario / empresa</Lbl>
             <Text style={[s.body, s.bold]}>{v.clienteNombre || "—"}</Text>
             {v.clienteRut ? <Text style={s.gray}>RUT: {v.clienteRut}</Text> : null}
+            {v.direccion ? <Text style={s.gray}>Dirección: {v.direccion}</Text> : null}
           </View>
         </View>
 
-        {/* Fechas */}
+        {/* Fechas (v1: servicio / inicio del tratamiento / vigencia) */}
         <View style={s.datesRow}>
           <View style={s.dateBox}>
             <Lbl>Fecha del servicio</Lbl>
             <Text style={[s.body, s.bold]}>{fechaLarga(v.serviceDate)}</Text>
           </View>
           <View style={s.dateBox}>
-            <Lbl>Emisión del certificado</Lbl>
-            <Text style={[s.body, s.bold]}>{fechaLarga(v.issuedAt)}</Text>
+            <Lbl>Inicio del tratamiento</Lbl>
+            <Text style={[s.body, s.bold]}>{fechaLarga(v.serviceDate)}</Text>
           </View>
-          <View style={[s.dateBox, s.dateBoxMain]}>
+          <View style={[s.dateBox, { borderWidth: 1.5, borderColor: P, backgroundColor: "#F0F3F8" }]}>
             <Lbl>Vigencia del certificado</Lbl>
             <Text style={[s.body, s.bold]}>{fechaLarga(v.fechaVigencia || null)}</Text>
           </View>
         </View>
 
         {/* Tratamientos */}
-        <Text style={s.sectionHdr}>Tratamientos realizados</Text>
+        <Text style={[s.sectionHdr, { backgroundColor: P }]}>Tratamientos realizados</Text>
         <View style={s.chipsRow}>
+          <Text style={[s.lbl, { marginRight: 6, marginBottom: 4 }]}>Tipo:</Text>
           {(v.servicios.length ? v.servicios : ["Control de Plagas"]).map((t) => (
-            <Text key={t} style={s.chip}>
+            <Text key={t} style={[s.chip, { backgroundColor: P }]}>
               {t}
             </Text>
           ))}
         </View>
 
         {/* Metodología y lugares */}
-        <View style={[s.twoCols, { marginTop: 12 }]}>
+        <View style={[s.cols, { marginTop: 10 }]}>
           <View style={s.col}>
             <Lbl>Metodología aplicada</Lbl>
             <Text style={[s.body, s.bold]}>{v.metodologia}</Text>
@@ -304,15 +336,17 @@ function CertificateDoc({ view: v, qrDataUrl, verifyUrl }: CertificatePdfOptions
           </View>
         </View>
 
-        {/* Productos */}
+        {/* Productos utilizados (v1: con Concentración y sub-etiqueta por tratamiento) */}
         {v.productos.length > 0 ? (
           <View>
-            <Text style={s.sectionHdr}>Productos utilizados</Text>
-            <View style={s.th}>
+            <Text style={[s.sectionHdr, { backgroundColor: P }]}>Productos utilizados</Text>
+            <Text style={s.subHdr}>{subLabel}</Text>
+            <View style={[s.th, { backgroundColor: P }]}>
               <Text style={[s.thCell, s.cNombre]}>Nombre comercial</Text>
               <Text style={[s.thCell, s.cIsp]}>Reg. ISP</Text>
               <Text style={[s.thCell, s.cForm]}>Formulación</Text>
               <Text style={[s.thCell, s.cIngr]}>Ingrediente activo</Text>
+              <Text style={[s.thCell, s.cConc]}>Concentración</Text>
               <Text style={[s.thCell, s.cDosis]}>Dosis</Text>
               <Text style={[s.thCell, s.cCant]}>Cant.</Text>
             </View>
@@ -322,6 +356,7 @@ function CertificateDoc({ view: v, qrDataUrl, verifyUrl }: CertificatePdfOptions
                 <Text style={[s.td, s.cIsp]}>{p.isp}</Text>
                 <Text style={[s.td, s.cForm]}>{p.formulacion}</Text>
                 <Text style={[s.td, s.cIngr]}>{p.ingrediente}</Text>
+                <Text style={[s.td, s.cConc]}>{p.concentracion}</Text>
                 <Text style={[s.td, s.cDosis]}>{p.dosis}</Text>
                 <Text style={[s.td, s.cCant]}>{p.cantidad}</Text>
               </View>
@@ -329,29 +364,14 @@ function CertificateDoc({ view: v, qrDataUrl, verifyUrl }: CertificatePdfOptions
           </View>
         ) : null}
 
-        {/* Observaciones */}
-        {v.trabajoRealizado || v.observaciones || v.recomendaciones ? (
+        {/* Observaciones y recomendaciones (v1: defaults de Configuración primero) */}
+        {obsCfg || obsCert || recsCert ? (
           <View>
-            <Text style={s.sectionHdr}>Observaciones y recomendaciones</Text>
+            <Text style={[s.sectionHdr, { backgroundColor: P }]}>Observaciones y recomendaciones</Text>
             <View style={s.obsBox}>
-              {v.trabajoRealizado ? (
-                <Text>
-                  <Text style={s.bold}>Trabajo realizado: </Text>
-                  {v.trabajoRealizado}
-                </Text>
-              ) : null}
-              {v.observaciones ? (
-                <Text>
-                  <Text style={s.bold}>Observaciones: </Text>
-                  {v.observaciones}
-                </Text>
-              ) : null}
-              {v.recomendaciones ? (
-                <Text>
-                  <Text style={s.bold}>Recomendaciones: </Text>
-                  {v.recomendaciones}
-                </Text>
-              ) : null}
+              {obsCfg ? <Text>{obsCfg}</Text> : null}
+              {obsCert ? <Text style={{ marginTop: obsCfg ? 4 : 0 }}>{obsCert}</Text> : null}
+              {recsCert ? <Text style={{ marginTop: obsCfg || obsCert ? 4 : 0 }}>{recsCert}</Text> : null}
             </View>
           </View>
         ) : null}
@@ -368,26 +388,21 @@ function CertificateDoc({ view: v, qrDataUrl, verifyUrl }: CertificatePdfOptions
           </View>
         </View>
 
-        {/* Pie con leyenda penal y QR de verificación */}
-        <View style={s.footer} wrap={false}>
+        {/* Pie (v1: contacto + leyenda legal + QR "Verificar documento") */}
+        <View style={[s.footer, { borderTopColor: P }]} fixed>
+          <View style={s.footText}>
+            <Text style={{ fontFamily: "Helvetica-Bold", color: INK }}>{e.nombreLegal}</Text>
+            <Text style={{ marginTop: 1 }}>
+              {[e.direccion, e.tel ? `Tel: ${e.tel}` : "", e.correo].filter(Boolean).join(" · ")}
+            </Text>
+            <Text style={{ marginTop: 2 }}>{e.textoLegal}</Text>
+          </View>
           {qrDataUrl ? (
             <View style={s.qrBox}>
               <Image src={qrDataUrl} style={s.qrImg} />
-              <Text style={s.qrCaption}>Escanee para verificar</Text>
+              <Text style={s.qrCaption}>Verificar documento</Text>
             </View>
           ) : null}
-          <View style={s.footText}>
-            <Text style={{ fontFamily: "Helvetica-Bold", color: INK }}>
-              {e.nombreLegal} · {e.direccion} · {e.correo}
-            </Text>
-            <Text style={{ marginTop: 2 }}>
-              La adulteración o falsificación de este certificado y el uso de un certificado falso es un
-              delito penado por la ley, descrito en los artículos 193, 197 y 198 del Código Penal chileno.
-            </Text>
-            <Text style={{ marginTop: 2 }}>
-              Certificado folio {String(v.folio)} · Verifique su autenticidad en {verifyUrl}
-            </Text>
-          </View>
         </View>
       </Page>
     </Document>

@@ -47,12 +47,29 @@ export interface CertificateCompany {
   rut: string;
   direccion: string;
   correo: string;
+  tel: string;
   resSan: string;
   repLegal: string;
   repTecNombre: string;
   repTecRut: string;
   /** Firma del representante técnico (base64 o URL, heredada de la v1). */
   firma: string;
+  /** Colores del PDF (config v1: pdf_color_primario / pdf_color_acento). */
+  colorPrimario: string;
+  colorAcento: string;
+  /** Textos por defecto de Configuración (en el certificado van SIEMPRE primero). */
+  obsDefault: string;
+  recsDefault: string;
+  /** Leyenda legal del pie (config v1: texto_legal_cert; fallback Código Penal). */
+  textoLegal: string;
+}
+
+const LEGAL_DEFAULT =
+  "La adulteración o falsificación de este certificado y el uso de un certificado falso es un " +
+  "delito penado por la ley, descrito en los artículos 193, 197 y 198 del Código Penal chileno.";
+
+function hexOr(v: unknown, fb: string): string {
+  return typeof v === "string" && /^#[0-9a-f]{6}$/i.test(v) ? v : fb;
 }
 
 export interface CertificateView {
@@ -209,11 +226,17 @@ export function buildCertificateView(
       rut: asStr(cfg.rut, "76.818.360-0"),
       direccion: asStr(cfg.direccion, "Francisco de Rioja 1260, San Bernardo"),
       correo: asStr(cfg.correo, "contacto@serfuplagas.cl"),
+      tel: asStr(cfg.tel),
       resSan: asStr(cfg.res_san, "Nº 44716 · 25/10/2006"),
       repLegal: asStr(cfg.rep_legal),
       repTecNombre: repTecNombre || "Representante Técnico",
       repTecRut: repTecRut ?? "",
       firma: asStr(cfg.firma_tec_base64) || asStr(cfg.firma_tec_url),
+      colorPrimario: hexOr(cfg.pdf_color_primario, "#1B3A6B"),
+      colorAcento: hexOr(cfg.pdf_color_acento, "#FFD43B"),
+      obsDefault: asStr(cfg.observaciones_default).trim(),
+      recsDefault: asStr(cfg.recomendaciones_default).trim(),
+      textoLegal: asStr(cfg.texto_legal_cert) || LEGAL_DEFAULT,
     },
   };
 }

@@ -81,39 +81,32 @@ function escapeHtml(s: string): string {
     .replaceAll('"', "&quot;");
 }
 
+/** Cuerpo interior del correo (la plantilla corporativa la agrega email.ts, como la v1). */
 function emailHtml(view: CertificateView, verifyUrl: string): string {
   const e = view.empresa;
   const lugar = [view.sucursalNombre, view.direccion].filter(Boolean).join(" — ");
   const vigencia = view.fechaVigencia
-    ? `<p style="margin:12px 0 0">El certificado tiene vigencia hasta el <strong>${escapeHtml(fechaLarga(view.fechaVigencia))}</strong>.</p>`
+    ? `<p>El certificado tiene vigencia hasta el <strong>${escapeHtml(fechaLarga(view.fechaVigencia))}</strong>.</p>`
     : "";
   return `
-<div style="font-family:'Segoe UI',Arial,sans-serif;max-width:560px;margin:0 auto;color:#1A1F2C">
-  <div style="background:#1B3A6B;color:#ffffff;padding:18px 24px;border-radius:10px 10px 0 0">
-    <p style="margin:0;font-size:17px;font-weight:bold">${escapeHtml(e.nombreLegal)}</p>
-    <p style="margin:4px 0 0;font-size:12px;opacity:.85">Control de Plagas e Higiene Ambiental</p>
-  </div>
-  <div style="border:1px solid #E2E4EA;border-top:0;padding:24px;border-radius:0 0 10px 10px;font-size:14px;line-height:1.55">
-    <p style="margin:0">Estimado(a) cliente:</p>
-    <p style="margin:12px 0 0">
-      Adjuntamos el <strong>Certificado de Control de Plagas N° ${view.folio}</strong>
-      correspondiente al servicio realizado el <strong>${escapeHtml(fechaLarga(view.serviceDate))}</strong>${
-        lugar ? ` en ${escapeHtml(lugar)}` : ""
-      }.
-    </p>
-    ${vigencia}
-    <p style="margin:16px 0 0;font-size:12.5px;color:#4A5061">
-      Puede verificar la autenticidad de este certificado escaneando el código QR del documento
-      o ingresando a:<br>
-      <a href="${verifyUrl}" style="color:#1B3A6B">${verifyUrl}</a>
-    </p>
-    <p style="margin:20px 0 0">
-      Atentamente,<br>
-      <strong>${escapeHtml(e.nombreLegal)}</strong><br>
-      <span style="font-size:12.5px;color:#4A5061">${escapeHtml(e.direccion)} · ${escapeHtml(e.correo)}</span>
-    </p>
-  </div>
-</div>`;
+<p>Estimado(a) cliente:</p>
+<p>
+  Adjuntamos el <strong>Certificado de Control de Plagas N° ${view.folio}</strong>
+  correspondiente al servicio realizado el <strong>${escapeHtml(fechaLarga(view.serviceDate))}</strong>${
+    lugar ? ` en ${escapeHtml(lugar)}` : ""
+  }.
+</p>
+${vigencia}
+<p style="font-size:13px;color:#666">
+  Puede verificar la autenticidad de este certificado escaneando el código QR del documento
+  o ingresando a:<br>
+  <a href="${verifyUrl}">${verifyUrl}</a>
+</p>
+<p>
+  Atentamente,<br>
+  <strong>${escapeHtml(e.nombreLegal)}</strong><br>
+  <span style="font-size:13px;color:#666">${escapeHtml(e.direccion)} · ${escapeHtml(e.correo)}</span>
+</p>`;
 }
 
 /** Botón "Enviar por correo": genera el PDF al momento y lo adjunta. */

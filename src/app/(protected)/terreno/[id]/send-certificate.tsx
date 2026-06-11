@@ -51,9 +51,9 @@ export function SendCertificate({ certId, pdfUrl, sentAtLabel, sentTo, defaultEm
       {!emailReady && (
         <Alert>
           <AlertDescription>
-            El envío por correo aún no está configurado: falta crear la cuenta del proveedor
-            (Resend) y cargar RESEND_API_KEY y EMAIL_FROM en Vercel. El PDF sí se puede
-            generar y descargar.
+            El envío por correo aún no está configurado: faltan los secretos GRAPH_* de
+            Microsoft (los mismos de la v1) en Vercel. El PDF sí se puede generar y
+            descargar.
           </AlertDescription>
         </Alert>
       )}

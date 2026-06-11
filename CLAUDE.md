@@ -146,10 +146,21 @@ La **fuente de verdad** está en `docs/` (léela antes de escribir código):
   `/tecnicos`: selector para enlazar `technicians.profile_id` (valida tenant).
   Test del PDF: `npx tsx migration/test-pdf.mts` (PDFs de muestra con datos reales).
 
+- **Correo = Microsoft Graph como la v1 (11-jun, 7ª sesión):** `src/lib/email.ts` usa
+  los secretos `GRAPH_TENANT_ID/CLIENT_ID/CLIENT_SECRET/SENDER_EMAIL` (los MISMOS de la
+  v1, en Secret Manager de serfuplagapp-e436d; la llave de servicio NO puede leerlos —
+  403). Plantilla HTML corporativa v1. Certificado alineado al formato v1 exacto
+  (logo `src/lib/pdf/logo.ts`, folio en fila identificación, fechas v1, columna
+  Concentración, obs default primero, pie fijo + QR "Verificar documento", colores
+  `pdf_color_primario/acento`). OJO: la v1 tiene además un **Reporte Técnico**
+  (multi-página: visita + láminas UV + fotos + planos, templates_v2.js) AÚN NO portado.
+
 - **PENDIENTE (lo próximo, en orden):**
-  1. **Configuración de Carlos (guiada):** cuenta Resend + DNS de serfuplagas.cl +
-     `RESEND_API_KEY`/`EMAIL_FROM`/`NEXT_PUBLIC_SITE_URL` en Vercel.
-  2. **Fase 3 restante**: editor visual de layouts/estaciones, PWA offline para técnicos.
+  1. **Configuración de Carlos (guiada):** copiar los 4 secretos GRAPH_* desde
+     Secret Manager (proyecto serfuplagapp-e436d, cuenta serfuplagapp@gmail.com)
+     a Vercel + `NEXT_PUBLIC_SITE_URL`.
+  2. **Fase 3 restante**: Reporte Técnico (formato v1), editor visual de
+     layouts/estaciones, PWA offline para técnicos.
   2. Seguir el roadmap de paridad (SII/Portal, CRM, cartola, RR.HH., IA-UV — ver `docs/06`).
   3. **Limpiezas/tareas de Carlos:** crear técnicos en `/tecnicos`; borrar test `dasda` + clientes
      duplicados (Globe ×3, El Gran Corte ×2…), 2 RUT sin DV (Educain, El Gran Corte), RUT de ABINGRAF;

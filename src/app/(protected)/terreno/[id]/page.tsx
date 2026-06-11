@@ -27,6 +27,21 @@ export default async function CertificadoPage({
   if (!view) notFound();
   const e = view.empresa;
 
+  // Observaciones por defecto de Configuración (en el certificado van primero, v1).
+  const obsCfg = [e.obsDefault, e.recsDefault].filter(Boolean).join(" ").trim();
+
+  // Sub-etiqueta v1 de la tabla de productos según el primer tratamiento.
+  const SUB_LABEL: Record<string, string> = {
+    desratización: "Desratización — Rodenticidas / Cebos",
+    desinsectación: "Desinsectación — Productos químicos",
+    sanitización: "Sanitización — Productos",
+    aromatización: "Aromatización — Productos",
+  };
+  const primerServicio = (view.servicios[0] ?? "").toLowerCase().trim();
+  const subLabelProductos = view.servicios.length
+    ? (SUB_LABEL[primerServicio] ?? `${view.servicios[0]} — Productos`)
+    : "Productos utilizados";
+
   // QR de verificación pública (va impreso en la hoja y dentro del PDF).
   const verifyUrl = `${getSiteUrl()}/verificar/${view.verifyCode}`;
   let qrDataUrl: string | null = null;
@@ -90,41 +105,45 @@ export default async function CertificadoPage({
 
       {/* Hoja del certificado (réplica de la plantilla v1) */}
       <div className="cert-sheet mx-auto w-full max-w-[210mm] bg-white text-[#1A1F2C] shadow-md print:shadow-none">
-        {/* Encabezado */}
+        {/* Encabezado (v1: empresa | CERTIFICADO | logo) */}
         <header className="flex items-start justify-between gap-4 border-b-4 border-[#1B3A6B] p-6 pb-4">
-          <div className="text-[11px] leading-snug">
+          <div className="w-60 text-[11px] leading-snug">
             <p className="text-[13px] font-bold">{e.nombreLegal}</p>
             <p>RUT: {e.rut}</p>
+            {e.tel && <p>Tel: {e.tel}</p>}
             <p>{e.direccion}</p>
-            <p>{e.correo}</p>
             <p className="mt-1 font-medium">Res. Sanitaria {e.resSan} · SEREMI de Salud R.M.</p>
             {e.repLegal && <p>Representante: {e.repLegal}</p>}
           </div>
-          <div className="text-right">
+          <div className="flex-1 pt-2 text-center">
             <p className="text-2xl font-bold tracking-wide text-[#1B3A6B]">CERTIFICADO</p>
             <p className="text-[11px] text-[#4A5061]">Control de Plagas e Higiene Ambiental</p>
-            <div className="mt-2 rounded-lg border-2 border-[#1B3A6B] px-3 py-1 text-center">
-              <p className="text-[10px] tracking-wide text-[#4A5061] uppercase">Folio N°</p>
-              <p className="text-xl font-bold text-[#1B3A6B] tabular-nums">{view.folio}</p>
-            </div>
+          </div>
+          <div className="w-36 text-right">
+            {/* eslint-disable-next-line @next/next/no-img-element -- logo heredado v1 */}
+            <img src="/logo-serfuplagas.png" alt="Serfuplagas" className="ml-auto w-32" />
           </div>
         </header>
 
         <div className="flex flex-col gap-4 p-6">
-          {/* Identificación del inmueble */}
+          {/* Identificación del inmueble (con celda de folio, v1) */}
           <section>
             <h2 className="cert-hdr">Identificación del inmueble</h2>
-            <div className="grid grid-cols-2 gap-4 text-[12px]">
-              <div>
+            <div className="flex gap-4 text-[12px]">
+              <div className="flex-1">
                 <p className="cert-lbl">Cliente / Sucursal</p>
                 <p className="font-semibold">{view.clienteNombre || "—"}</p>
                 {view.sucursalNombre && <p>{view.sucursalNombre}</p>}
                 <p className="text-[#4A5061]">{view.direccion}</p>
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="cert-lbl">Diagnóstico previo</p>
                 <p className="font-semibold">{view.plagas.length ? view.plagas.join(", ") : "Sin evidencia"}</p>
                 {view.grado && <p className="text-[#4A5061]">Grado de infestación: {view.grado}</p>}
+              </div>
+              <div className="flex w-28 flex-col items-center justify-center rounded-lg border-2 border-[#1B3A6B] px-3 py-1 text-center">
+                <p className="cert-lbl">Folio N°</p>
+                <p className="text-xl font-bold text-[#1B3A6B] tabular-nums">{view.folio}</p>
               </div>
             </div>
           </section>
@@ -134,7 +153,7 @@ export default async function CertificadoPage({
             <h2 className="cert-hdr">Datos del servicio</h2>
             <div className="grid grid-cols-2 gap-4 text-[12px]">
               <div>
-                <p className="cert-lbl">Persona que recibe el servicio</p>
+                <p className="cert-lbl">Persona que solicitó el trabajo</p>
                 <p className="font-semibold">{view.titular || "—"}</p>
                 {view.rutFirmante && <p className="text-[#4A5061]">RUT: {view.rutFirmante}</p>}
                 {view.correoFirmante && <p className="text-[#4A5061]">{view.correoFirmante}</p>}
@@ -143,19 +162,20 @@ export default async function CertificadoPage({
                 <p className="cert-lbl">Identificación del propietario / empresa</p>
                 <p className="font-semibold">{view.clienteNombre || "—"}</p>
                 {view.clienteRut && <p className="text-[#4A5061]">RUT: {view.clienteRut}</p>}
+                {view.direccion && <p className="text-[#4A5061]">Dirección: {view.direccion}</p>}
               </div>
             </div>
           </section>
 
-          {/* Fechas */}
+          {/* Fechas (v1: servicio / inicio del tratamiento / vigencia) */}
           <section className="grid grid-cols-3 gap-2 text-center text-[12px]">
             <div className="rounded-lg border p-2">
               <p className="cert-lbl">Fecha del servicio</p>
               <p className="font-semibold">{fechaLarga(view.serviceDate)}</p>
             </div>
             <div className="rounded-lg border p-2">
-              <p className="cert-lbl">Emisión del certificado</p>
-              <p className="font-semibold">{fechaLarga(view.issuedAt)}</p>
+              <p className="cert-lbl">Inicio del tratamiento</p>
+              <p className="font-semibold">{fechaLarga(view.serviceDate)}</p>
             </div>
             <div className="rounded-lg border-2 border-[#1B3A6B] bg-[#1B3A6B]/5 p-2">
               <p className="cert-lbl">Vigencia del certificado</p>
@@ -166,7 +186,8 @@ export default async function CertificadoPage({
           {/* Tratamientos */}
           <section>
             <h2 className="cert-hdr">Tratamientos realizados</h2>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="cert-lbl !mb-0">Tipo:</span>
               {(view.servicios.length ? view.servicios : ["Control de Plagas"]).map((t) => (
                 <span key={t} className="rounded-full bg-[#1B3A6B] px-3 py-0.5 text-[11px] font-medium text-white">
                   {t}
@@ -198,17 +219,19 @@ export default async function CertificadoPage({
             </div>
           </section>
 
-          {/* Productos */}
+          {/* Productos (v1: con Concentración y sub-etiqueta por tratamiento) */}
           {view.productos.length > 0 && (
             <section>
               <h2 className="cert-hdr">Productos utilizados</h2>
-              <table className="w-full border-collapse text-[10.5px]">
+              <p className="cert-lbl">{subLabelProductos}</p>
+              <table className="w-full border-collapse text-[10px]">
                 <thead>
                   <tr className="bg-[#1B3A6B] text-left text-white">
                     <th className="px-2 py-1">Nombre comercial</th>
                     <th className="px-2 py-1">Reg. ISP</th>
                     <th className="px-2 py-1">Formulación</th>
                     <th className="px-2 py-1">Ingrediente activo</th>
+                    <th className="px-2 py-1">Concentración</th>
                     <th className="px-2 py-1">Dosis</th>
                     <th className="px-2 py-1">Cant.</th>
                   </tr>
@@ -220,6 +243,7 @@ export default async function CertificadoPage({
                       <td className="border-b px-2 py-1">{p.isp}</td>
                       <td className="border-b px-2 py-1">{p.formulacion}</td>
                       <td className="border-b px-2 py-1">{p.ingrediente}</td>
+                      <td className="border-b px-2 py-1">{p.concentracion}</td>
                       <td className="border-b px-2 py-1">{p.dosis}</td>
                       <td className="border-b px-2 py-1">{p.cantidad}</td>
                     </tr>
@@ -229,26 +253,14 @@ export default async function CertificadoPage({
             </section>
           )}
 
-          {/* Trabajo / Observaciones / Recomendaciones */}
-          {(view.trabajoRealizado || view.observaciones || view.recomendaciones) && (
+          {/* Observaciones y recomendaciones (v1: defaults de Configuración SIEMPRE primero) */}
+          {(obsCfg || view.observaciones || view.recomendaciones) && (
             <section>
               <h2 className="cert-hdr">Observaciones y recomendaciones</h2>
               <div className="flex flex-col gap-1.5 rounded-lg border bg-[#F7F5EF] p-3 text-[11.5px] leading-relaxed">
-                {view.trabajoRealizado && (
-                  <p>
-                    <strong>Trabajo realizado:</strong> {view.trabajoRealizado}
-                  </p>
-                )}
-                {view.observaciones && (
-                  <p>
-                    <strong>Observaciones:</strong> {view.observaciones}
-                  </p>
-                )}
-                {view.recomendaciones && (
-                  <p>
-                    <strong>Recomendaciones:</strong> {view.recomendaciones}
-                  </p>
-                )}
+                {obsCfg && <p>{obsCfg}</p>}
+                {view.observaciones && <p>{view.observaciones}</p>}
+                {view.recomendaciones && <p>{view.recomendaciones}</p>}
               </div>
             </section>
           )}
@@ -269,29 +281,30 @@ export default async function CertificadoPage({
           </section>
         </div>
 
-        {/* Pie */}
+        {/* Pie (v1: contacto + leyenda legal + QR "Verificar documento") */}
         <footer className="border-t-2 border-[#1B3A6B] p-4 text-[9.5px] leading-snug text-[#4A5061]">
           <div className="flex items-center gap-3">
+            <div className="flex-1 text-center">
+              <p className="font-semibold text-[#1A1F2C]">{e.nombreLegal}</p>
+              <p className="mt-0.5">
+                {[e.direccion, e.tel ? `Tel: ${e.tel}` : "", e.correo].filter(Boolean).join(" · ")}
+              </p>
+              <p className="mt-1">{e.textoLegal}</p>
+              <p className="mt-1">
+                Certificado folio {view.folio} · emitido el {view.issuedAt ? santiagoDate(view.issuedAt) : "—"}.
+              </p>
+            </div>
             {qrDataUrl && (
               <div className="shrink-0 text-center">
                 {/* eslint-disable-next-line @next/next/no-img-element -- QR generado en el servidor (data URL) */}
                 <img src={qrDataUrl} alt="Código QR de verificación" className="h-16 w-16" />
-                <p className="mt-0.5 text-[6.5px]">Escanee para verificar</p>
+                <p className="mt-0.5 text-[6.5px]">
+                  Verificar
+                  <br />
+                  documento
+                </p>
               </div>
             )}
-            <div className="flex-1 text-center">
-              <p className="font-semibold text-[#1A1F2C]">
-                {e.nombreLegal} · {e.direccion} · {e.correo}
-              </p>
-              <p className="mt-1">
-                La adulteración o falsificación de este certificado y el uso de un certificado falso es un
-                delito penado por la ley, descrito en los artículos 193, 197 y 198 del Código Penal chileno.
-              </p>
-              <p className="mt-1">
-                Certificado folio {view.folio} · emitido el {view.issuedAt ? santiagoDate(view.issuedAt) : "—"} ·
-                verifique su autenticidad en {verifyUrl}
-              </p>
-            </div>
           </div>
         </footer>
       </div>

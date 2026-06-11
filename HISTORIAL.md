@@ -464,3 +464,35 @@ Resend, verificar el dominio serfuplagas.cl (DNS) y cargar `RESEND_API_KEY` +
 `EMAIL_FROM` en Vercel.
 
 **Pendiente Fase 3 restante:** editor visual de layouts/estaciones; PWA offline.
+
+## 2026-06-11 (7ª sesión) — Correo vía Microsoft Graph (como v1) + certificado en formato v1 exacto
+
+**Revisión de la v1 pedida por Carlos** (functions/correo.js, functions/pdf.js,
+modulos/informes/templates_v2.js):
+
+- **La v1 NO usa proveedor externo de correo: usa Microsoft Graph** (app de
+  Azure con Mail.Send; secretos GRAPH_TENANT_ID/CLIENT_ID/CLIENT_SECRET/
+  SENDER_EMAIL en el Secret Manager del proyecto Firebase; remitentes
+  permitidos: operaciones@, facturacion@, contacto@, abernal@serfuplagas.cl).
+  → `src/lib/email.ts` REESCRITO: token client_credentials + sendMail de Graph,
+  con la MISMA plantilla HTML corporativa de la v1 (header SERFUPLAGAS, footer
+  logo + www.serfuplagas.cl). Se descartó Resend. Falta que Carlos copie los 4
+  secretos GRAPH_* a Vercel (la llave de servicio no tiene permiso de Secret
+  Manager: 403; script listo en `migration/get-graph-secrets.mjs` si se le da
+  el rol "Secret Manager Secret Accessor").
+- **Formato v1 del certificado aplicado** a PDF y hoja imprimible: logo en el
+  encabezado (embebido en `src/lib/pdf/logo.ts` + `public/logo-serfuplagas.png`),
+  folio DENTRO de "Identificación del inmueble", "Persona que solicitó el
+  trabajo", fechas Servicio/Inicio del tratamiento/Vigencia, tabla de productos
+  con columna **Concentración** y sub-etiqueta por tratamiento (Desratización —
+  Rodenticidas / Cebos…), observaciones por defecto de Configuración SIEMPRE
+  primero, pie fijo al borde inferior con contacto + leyenda legal
+  (`texto_legal_cert` configurable) + QR "Verificar documento", colores
+  configurables (`pdf_color_primario`/`acento`). Vista ampliada en cert-view
+  (tel, colores, obsDefault/recsDefault, textoLegal). PDF re-probado con datos
+  reales: 1 página A4 ✅.
+- **La v1 además tiene un REPORTE TÉCNICO** (documento aparte, multi-página:
+  registro de visita, láminas UV con análisis IA, evidencia fotográfica,
+  planos). El QR v1 verificaba por folio en app.serfuplagas.cl/verificar; la
+  v2 verifica por código aleatorio (más seguro). **Pendiente próximo: portar
+  el Reporte Técnico** (la v2 ya captura fotos de terreno, base lista).
