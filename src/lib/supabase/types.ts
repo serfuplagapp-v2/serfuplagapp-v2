@@ -31,6 +31,8 @@ export type MovementStatus =
   | "facturado"
   | "pagado"
   | "rechazado";
+export type TaskPriority = "alta" | "normal";
+export type TaskStatus = "pendiente" | "hecha";
 
 type Timestamps = { created_at: string; updated_at: string };
 
@@ -461,6 +463,42 @@ export interface Database {
         Update: { service_id?: string };
         Relationships: [];
       };
+      tasks: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          title: string;
+          due_date: string | null;
+          priority: TaskPriority;
+          client_id: string | null;
+          notes: string | null;
+          status: TaskStatus;
+          done_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          title: string;
+          due_date?: string | null;
+          priority?: TaskPriority;
+          client_id?: string | null;
+          notes?: string | null;
+          status?: TaskStatus;
+          done_at?: string | null;
+        };
+        Update: {
+          title?: string;
+          due_date?: string | null;
+          priority?: TaskPriority;
+          client_id?: string | null;
+          notes?: string | null;
+          status?: TaskStatus;
+          done_at?: string | null;
+        };
+        Relationships: [];
+      };
       dte_documents: {
         Row: {
           id: string;
@@ -515,6 +553,8 @@ export interface Database {
       billing_mode: BillingMode;
       movement_type: MovementType;
       movement_status: MovementStatus;
+      task_priority: TaskPriority;
+      task_status: TaskStatus;
     };
     CompositeTypes: Record<never, never>;
   };

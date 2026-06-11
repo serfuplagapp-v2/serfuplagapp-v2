@@ -89,6 +89,17 @@ La **fuente de verdad** está en `docs/` (léela antes de escribir código):
     con bordes de DST (`migration/test-datetime.mts`). Revisión adversarial completa +
     arreglos de manejo de errores (lotes, rutas, propuestas) aplicados — ver HISTORIAL 11-jun.
 
+- **Estructura de módulos v1 COMPLETA en el menú (11-jun, 2ª sesión).** Decisión Carlos:
+  paridad de módulos y UI/UX con la v1, velocidad primero. Menú lateral réplica del
+  rediseño v1 (4 secciones, activo amarillo `#FFD43B` sobre navy, header `#122850`).
+  Módulos nuevos: **`/ordenes`** (lista OT estilo v1: pestañas con contadores y colores v1,
+  folio desde `legacy_data->>folio`, filtros, 50/pág), **`/pendientes`** (tareas manuales
+  v1, migr. **0010** `tasks`), **`/configuracion`** (empresa editable owner/admin —
+  migr. **0009** —, chips de tipos de servicio, equipo), **`/panel`** = tablero de alertas.
+  Placeholders con fase declarada: CRM, Terreno, Layouts, OC, Stock, Casos Esp., Plantillas.
+  Mapeos: Facturación→`/comercial`, RR.HH.→`/tecnicos`, Agenda Op.→`/agenda/ruta`.
+  OJO: `/panel` usa `getSessionProfile` (NO `requireEnabledProfile`, evita bucle).
+
 - **PENDIENTE (lo próximo, en orden):**
   1. **Fase 3 — Terreno/certificados**: tablas products/certificates/layouts/stations/station_checks;
      generar el certificado PDF con folio correlativo desde **30697** usando la data en `services.legacy_data`.

@@ -235,3 +235,42 @@ test zona horaria 15/15 ✅. Migración 0008 aplicada en producción.
 
 **Siguiente:** Fase 3 — Terreno/certificados (products/certificates/layouts/stations;
 certificado PDF con folio desde 30.697 usando `services.legacy_data`).
+
+## 2026-06-11 (2ª sesión) — Estructura completa de módulos v1 + Pendientes, Órdenes y Configuración
+
+**Decisión de Carlos:** avanzar con los demás módulos para entrar a producción pronto,
+manteniendo los módulos y la UI/UX de la v1 (envió pantallazo del menú), con la velocidad
+como prioridad.
+
+**Menú lateral = réplica exacta de la v1** (`core/app.js` GRUPOS_ADMIN + `redesign.css`):
+4 secciones (Principal / Comercial / Operaciones / Gestión) con los 16 módulos, item
+activo con borde izquierdo amarillo `#FFD43B` sobre navy `#1B3A6B`, etiquetas de sección
+en mayúsculas tenues, cabecera navy oscuro `#122850`. Mapeo:
+- Ya operativos: Agenda→`/agenda`, Clientes→`/clientes`, Mapa (extra v2), Órdenes→`/ordenes`
+  (NUEVO), Agenda Op.→`/agenda/ruta`, Pendientes→`/pendientes` (NUEVO),
+  Facturación→`/comercial`, RR.HH.→`/tecnicos`, Configuración→`/configuracion` (NUEVO).
+- En construcción (página propia que declara su fase): CRM (F5), Terreno (F3), Layouts (F3),
+  Órdenes de Compra (F4), Stock (F3), Casos Especiales (F3), Plantillas (F5).
+
+**Módulos NUEVOS construidos (sobre el esquema existente, consultas en servidor):**
+
+- **`/ordenes` (Órdenes):** réplica de la lista v1 — pestañas por estado de terreno con
+  CONTADORES y colores v1 (planificada gris, asignada azul, en proceso naranjo, por validar
+  morado, terminada verde), columna **Folio** (desde `legacy_data->>folio` preservado),
+  búsqueda cliente/RUT, filtros agenda/técnico/mes, orden fecha desc, 50 por página.
+- **`/pendientes` (Pendientes):** réplica del módulo de TAREAS manuales de la v1
+  (migración **0010**: tabla `tasks` con RLS) — crear con título/fecha/prioridad/cliente/
+  notas, buckets Vencidas (rojo)/Hoy/Esta semana/Más adelante/Sin fecha, completar con
+  checkbox, Completadas expandible, eliminar con confirmación.
+- **`/configuracion` (Configuración):** datos de empresa (razón social/RUT, editable solo
+  owner/admin; migración **0009** grant update), catálogo de tipos de servicio
+  (agregar/activar/desactivar con chips), equipo con acceso + enlace a técnicos.
+- **`/panel` (Inicio):** ahora es el tablero de alertas operativas (propuestas por aprobar,
+  visitas atrasadas, próximos 7 días sin técnico, por validar, sucursales sin ubicación)
+  con contadores en servidor y listas acotadas.
+
+**Velocidad:** todo server-rendered sin JS extra; conteos con `head:true`; nombres solo de
+la página visible; consultas en `Promise.all`; sin consultas en el layout (el menú no
+consulta nada). Migraciones 0009/0010 aplicadas en producción.
+
+**Siguiente:** Fase 3 — Terreno/certificados (el módulo de mayor valor pendiente).
