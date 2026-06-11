@@ -123,10 +123,19 @@ La **fuente de verdad** está en `docs/` (léela antes de escribir código):
   OJO: en OTs terminadas el form deshabilita técnico/fecha — la action NO debe tocar la
   asignación en ese caso (bug ya corregido, no reintroducir).
 
+- **Captura móvil en terreno (11-jun, 5ª sesión, migr. 0013):** bucket Storage privado
+  `terreno` (rutas `{tenant}/{service}/…`, RLS por carpeta-tenant, URLs firmadas).
+  `/terreno/hoy` = visitas del día (técnico con profile_id enlazado ve solo las suyas);
+  `/terreno/hoy/[id]` = captura: check-in GPS → en_proceso, registro, fotos comprimidas
+  en el teléfono (1600px jpeg), firma cliente en canvas (`signature-pad.tsx`,
+  `photo-upload.tsx`), "Terminar visita" → por_validar (admin cierra y emite cert en
+  /ordenes/[id], donde ahora se ven las evidencias). field_data guarda checkin/checkout
+  hora+GPS, firma base64 y rutas de fotos.
+
 - **PENDIENTE (lo próximo, en orden):**
-  1. **Fase 3 restante — Terreno móvil**: captura en terreno (check-in GPS, firma del
-     cliente en canvas, fotos), PDF a Storage + envío por correo, editor visual de
-     layouts/estaciones, QR de verificación pública.
+  1. **Fase 3 restante**: PDF del certificado a Storage + envío por correo (necesita
+     proveedor de email), editor visual de layouts/estaciones, QR de verificación
+     pública, PWA offline para técnicos.
   2. Seguir el roadmap de paridad (SII/Portal, CRM, cartola, RR.HH., IA-UV — ver `docs/06`).
   3. **Limpiezas/tareas de Carlos:** crear técnicos en `/tecnicos`; borrar test `dasda` + clientes
      duplicados (Globe ×3, El Gran Corte ×2…), 2 RUT sin DV (Educain, El Gran Corte), RUT de ABINGRAF;

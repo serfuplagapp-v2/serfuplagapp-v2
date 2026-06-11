@@ -83,15 +83,19 @@ export default async function TerrenoPage({
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-          <SprayCan className="text-primary size-6" aria-hidden />
-          Terreno · Certificados
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          {total} certificados emitidos (historia traída de la v1). El registro en terreno
-          (check-in, firma, PDF) llega en la Fase 3 — los nuevos folios seguirán desde el correlativo.
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+            <SprayCan className="text-primary size-6" aria-hidden />
+            Terreno · Certificados
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            {total} certificados emitidos. Haz clic en un folio para ver e imprimir.
+          </p>
+        </div>
+        <Button asChild>
+          <Link href="/terreno/hoy">📱 Visitas de hoy</Link>
+        </Button>
       </div>
 
       <form method="get" className="flex max-w-md gap-2">

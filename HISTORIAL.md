@@ -370,3 +370,33 @@ asignación histórica.
 
 **Pendiente Fase 3 restante:** captura móvil en terreno (check-in/firma del cliente/fotos),
 guardado del PDF en Storage + envío por correo, editor visual de layouts, QR de verificación.
+
+## 2026-06-11 (5ª sesión) — Captura móvil en terreno (check-in, firma, fotos)
+
+**Migración 0013:** bucket privado de Storage `terreno` (rutas `{tenant}/{service}/…`,
+políticas RLS que exigen que la primera carpeta sea el tenant del usuario → aislamiento
+por empresa también en archivos; límite 10 MB, solo imágenes). Fotos se muestran con
+URLs firmadas (1 h), nunca públicas.
+
+**Qué se construyó (flujo del técnico, móvil-first):**
+
+- **`/terreno/hoy`:** visitas del día (hora, cliente, sucursal con dirección, estado).
+  Si el usuario tiene rol `tecnico` y su ficha en `/tecnicos` está enlazada a su cuenta
+  (technicians.profile_id), ve SOLO sus visitas asignadas.
+- **`/terreno/hoy/[id]` — captura de la visita:**
+  - **Check-in** con hora + GPS (geolocalización del teléfono, mejor esfuerzo) →
+    la OT pasa a "en proceso". Enlace "Cómo llegar" (Google Maps).
+  - Registro: trabajo realizado, plagas (chips), observaciones, recomendaciones.
+  - **Fotos:** se comprimen EN el teléfono (máx 1600px JPEG 80% — velocidad con señal
+    mala) y suben al bucket; rutas guardadas en `field_data.fotos`.
+  - **Firma del cliente** en canvas táctil (`signature-pad.tsx`) → base64 en
+    `field_data.firma_cliente_base64` + nombre/RUT de quien recibe.
+  - **"Terminar visita"** (valida trabajo realizado + nombre firmante): check-out con
+    hora/GPS → la OT queda **"por validar"**; la oficina la cierra y emite el
+    certificado desde `/ordenes/[id]` (flujo v1: técnico→por_validar, admin→terminada).
+- **`/ordenes/[id]` (admin):** nueva sección "Evidencias de terreno" — check-in/out con
+  enlace al punto GPS, firma del cliente y galería de fotos (URLs firmadas).
+- Acceso: botón "📱 Visitas de hoy" en Terreno.
+
+**Pendiente Fase 3 restante:** PDF del certificado a Storage + envío por correo;
+editor visual de layouts; QR de verificación pública; PWA offline.

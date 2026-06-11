@@ -116,6 +116,24 @@ export default async function OrdenDetallePage({
   const terminada = svc.field_status === "terminada";
   const certs = certRes.data ?? [];
 
+  // Evidencias capturadas en terreno (check-in/out, firma del cliente, fotos).
+  const firmaCliente = asStr(field.firma_cliente_base64) || null;
+  const checkinHora = asStr(field.checkin_hora) || null;
+  const checkoutHora = asStr(field.checkout_hora) || null;
+  const gpsIn =
+    typeof field.checkin_lat === "number" && typeof field.checkin_lng === "number"
+      ? `${field.checkin_lat},${field.checkin_lng}`
+      : null;
+  const fotoPaths = asArr(field.fotos).filter((x): x is string => typeof x === "string");
+  let fotosFirmadas: { path: string; url: string }[] = [];
+  if (fotoPaths.length) {
+    const { data: signed } = await supabase.storage.from("terreno").createSignedUrls(fotoPaths, 3600);
+    fotosFirmadas = (signed ?? []).flatMap((s) =>
+      s.signedUrl && s.path ? [{ path: s.path, url: s.signedUrl }] : [],
+    );
+  }
+  const hayEvidencia = firmaCliente || checkinHora || fotosFirmadas.length > 0;
+
   // Transiciones rápidas de estado de terreno (sin cerrar).
   const quick: { to: ServiceFieldStatus; label: string }[] = terminada
     ? []
@@ -200,6 +218,55 @@ export default async function OrdenDetallePage({
               </Button>
             </form>
           ))}
+        </div>
+      )}
+
+      {/* Evidencias de terreno (solo lectura) */}
+      {hayEvidencia && (
+        <div className="bg-card rounded-xl border p-4">
+          <h2 className="mb-2 font-semibold">📍 Evidencias de terreno</h2>
+          <div className="text-muted-foreground flex flex-wrap gap-x-5 gap-y-1 text-sm">
+            {checkinHora && (
+              <span>
+                Check-in: {santiagoDate(checkinHora)} {santiagoTime(checkinHora)}
+                {gpsIn && (
+                  <>
+                    {" "}
+                    <a
+                      href={`https://www.google.com/maps?q=${gpsIn}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline"
+                    >
+                      (ver GPS)
+                    </a>
+                  </>
+                )}
+              </span>
+            )}
+            {checkoutHora && (
+              <span>
+                Check-out: {santiagoDate(checkoutHora)} {santiagoTime(checkoutHora)}
+              </span>
+            )}
+          </div>
+          {firmaCliente && (
+            <div className="mt-3">
+              <p className="text-muted-foreground mb-1 text-xs">Firma del cliente:</p>
+              {/* eslint-disable-next-line @next/next/no-img-element -- firma base64 capturada en terreno */}
+              <img src={firmaCliente} alt="Firma del cliente" className="h-20 rounded border bg-white" />
+            </div>
+          )}
+          {fotosFirmadas.length > 0 && (
+            <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
+              {fotosFirmadas.map((f) => (
+                <a key={f.path} href={f.url} target="_blank" rel="noopener noreferrer">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- URLs firmadas temporales */}
+                  <img src={f.url} alt="Foto de terreno" className="aspect-square w-full rounded-lg border object-cover" />
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
