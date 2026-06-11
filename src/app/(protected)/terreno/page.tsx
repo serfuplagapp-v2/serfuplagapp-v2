@@ -83,7 +83,7 @@ export default async function TerrenoPage({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="modulo-sticky-top flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
             <SprayCan className="text-primary size-6" aria-hidden />

@@ -101,7 +101,7 @@ export default async function VisitasHoyPage({
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
-      <div>
+      <div className="modulo-sticky-top">
         <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
           <SprayCan className="text-primary size-6" aria-hidden />
           Visitas de hoy

@@ -156,7 +156,7 @@ export default async function PendientesPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
+      <div className="modulo-sticky-top">
         <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
           <CheckSquare className="text-primary size-6" aria-hidden />
           Pendientes

@@ -133,7 +133,7 @@ export function SidebarNav() {
 export function MobileNav() {
   const active = useActiveHref();
   return (
-    <nav className="bg-card flex gap-1 overflow-x-auto border-b px-2 py-2 md:hidden">
+    <nav className="bg-card sticky top-14 z-30 flex h-12 items-center gap-1 overflow-x-auto border-b px-2 md:hidden">
       {ALL_ITEMS.map((it) => {
         const Icon = it.icon;
         const isActive = active === it.href;

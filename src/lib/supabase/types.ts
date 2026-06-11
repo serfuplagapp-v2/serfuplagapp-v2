@@ -650,6 +650,9 @@ export interface Database {
           service_date: string | null;
           data: Json;
           pdf_path: string | null;
+          verify_code: string;
+          sent_at: string | null;
+          sent_to: string | null;
           legacy_id: string | null;
           created_at: string;
           updated_at: string;
@@ -665,6 +668,9 @@ export interface Database {
           service_date?: string | null;
           data?: Json;
           pdf_path?: string | null;
+          verify_code?: string;
+          sent_at?: string | null;
+          sent_to?: string | null;
           legacy_id?: string | null;
         };
         Update: {
@@ -676,6 +682,9 @@ export interface Database {
           service_date?: string | null;
           data?: Json;
           pdf_path?: string | null;
+          verify_code?: string;
+          sent_at?: string | null;
+          sent_to?: string | null;
         };
         Relationships: [];
       };
@@ -755,6 +764,18 @@ export interface Database {
       current_tenant_id: { Args: Record<never, never>; Returns: string };
       current_user_role: { Args: Record<never, never>; Returns: UserRole };
       next_cert_folio: { Args: Record<never, never>; Returns: number };
+      verify_certificate: {
+        Args: { p_code: string };
+        Returns: {
+          folio: number;
+          client_name: string | null;
+          branch_name: string | null;
+          service_date: string | null;
+          issued_at: string | null;
+          valid_until: string | null;
+          tenant_name: string;
+        }[];
+      };
       movements_summary: {
         Args: {
           p_from?: string | null;

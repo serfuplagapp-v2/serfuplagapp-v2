@@ -38,3 +38,34 @@ export async function toggleTechnician(formData: FormData): Promise<void> {
   await supabase.from("technicians").update({ active }).eq("id", id);
   revalidatePath("/tecnicos");
 }
+
+/**
+ * Enlaza (o desenlaza, con valor vacío) la cuenta de la app de un técnico.
+ * Con la cuenta enlazada, ese usuario ve SOLO sus visitas en Terreno →
+ * Visitas de hoy.
+ */
+export async function linkTechnicianProfile(formData: FormData): Promise<void> {
+  const { tenantId } = await requireEnabledProfile();
+  const id = String(formData.get("id") ?? "");
+  const profileId = String(formData.get("profile_id") ?? "").trim();
+  if (!id) return;
+
+  const supabase = await createSupabaseServerClient();
+  if (profileId) {
+    // Solo cuentas de la propia empresa (la FK de profile_id no valida tenant,
+    // así que se comprueba aquí; la RLS de profiles ya limita lo visible).
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", profileId)
+      .eq("tenant_id", tenantId)
+      .maybeSingle();
+    if (!prof) return;
+  }
+  await supabase
+    .from("technicians")
+    .update({ profile_id: profileId || null })
+    .eq("id", id);
+  revalidatePath("/tecnicos");
+  revalidatePath("/terreno/hoy");
+}

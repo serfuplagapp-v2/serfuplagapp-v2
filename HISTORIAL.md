@@ -400,3 +400,67 @@ URLs firmadas (1 h), nunca públicas.
 
 **Pendiente Fase 3 restante:** PDF del certificado a Storage + envío por correo;
 editor visual de layouts; QR de verificación pública; PWA offline.
+
+## 2026-06-11 (6ª sesión) — PDF del certificado + correo al cliente + QR de verificación + enlace técnico↔cuenta
+
+**Migración 0014** (aplicada y verificada: 386/386 certificados con código):
+`certificates.verify_code` (uuid único, imposible de adivinar) + `sent_at`/`sent_to`;
+bucket privado de Storage **`certificados`** (solo PDF, rutas `{tenant}/{cert}.pdf`,
+mismas políticas por carpeta-tenant que `terreno`, + UPDATE para regenerar);
+función **`verify_certificate(p_code)`** SECURITY DEFINER con acceso `anon`:
+la página pública consulta UN certificado por su código y recibe SOLO campos
+seguros (folio, cliente, fechas) — la RLS de la tabla no se abre.
+
+**Qué se construyó:**
+
+- **PDF del certificado en el servidor** (`src/lib/pdf/certificate-pdf.tsx`,
+  @react-pdf/renderer): réplica de la hoja imprimible (encabezado legal, folio,
+  secciones navy, tabla de productos enriquecida, firma del representante,
+  leyenda penal) + **QR de verificación** en el pie. Probado contra datos
+  reales de producción (`migration/test-pdf.mts` genera PDFs de muestra en
+  `migration/exports/`). La vista de datos se unificó en
+  `src/lib/cert-view.ts` (puro) + `src/lib/certificates.ts`
+  (`getCertificateView`): la página imprimible y el PDF usan EXACTAMENTE el
+  mismo armado de datos.
+- **Generar y enviar desde `/terreno/[id]`:** sección "PDF y envío al cliente"
+  (no se imprime): Generar/Regenerar PDF (queda en Storage, URL firmada 1 h
+  para descargar), enviar por correo con el PDF adjunto (correo sugerido:
+  firmante del servicio o contacto destinatario del cliente), registro del
+  último envío. Si falla el correo NO se marca como enviado.
+- **Correo vía Resend** (`src/lib/email.ts`, API HTTP directa, sin SDK):
+  requiere `RESEND_API_KEY` + `EMAIL_FROM` en Vercel; sin ellas la app avisa
+  "pendiente de configurar" y todo lo demás sigue funcionando. El remitente
+  usa el dominio serfuplagas.cl (verificación DNS en Resend, guía a Carlos).
+- **Verificación pública `/verificar/[code]`** (sin login, fuera del layout
+  protegido): "Certificado auténtico" con folio/cliente/fechas, aviso ámbar si
+  la vigencia expiró, rojo si el código no existe. El QR del PDF y de la hoja
+  imprimible apuntan aquí. `NEXT_PUBLIC_SITE_URL` (o la URL de producción de
+  Vercel) arma el enlace.
+- **QR también en la hoja imprimible** de `/terreno/[id]` (pie, junto a la
+  leyenda penal y la URL de verificación en texto).
+- **`/tecnicos`: enlazar cuenta de la app** — selector por técnico con los
+  perfiles de la empresa (`technicians.profile_id`, valida que el perfil sea
+  del mismo tenant); con la cuenta enlazada el técnico ve SOLO sus visitas en
+  `/terreno/hoy`. Ya no hay que tocar la base a mano.
+
+**Además (pedido de Carlos en la misma sesión):**
+- **Versión de la app visible** en la cabecera (junto a la marca, tenue, tooltip
+  "Versión publicada"), como en la v1. Sale de `package.json` → **v2.0.0**;
+  subir la versión en cada sesión que despliegue cambios.
+- **Headers sticky:** clase `.modulo-sticky-top` en `globals.css` (réplica del
+  patrón v1): el bloque título de CADA módulo queda fijo bajo la cabecera al
+  hacer scroll (desktop: bajo los 56px; móvil: bajo cabecera + menú móvil, que
+  ahora también es sticky con altura fija h-12). Aplicada a los 13 módulos
+  principales (panel, agenda, clientes, mapa, órdenes, pendientes, comercial,
+  terreno, terreno/hoy, stock, layouts, técnicos, configuración).
+
+**Verificado:** typecheck/lint/build ✅ · PDFs reales revisados visualmente ✅ ·
+migración 0014 aplicada en producción ✅. (La revisión adversarial multi-agente
+no pudo correr: límite mensual de gasto de subagentes; se hizo revisión manual
+de los puntos críticos.)
+
+**Pendiente que depende de Carlos (guiado en el chat):** crear cuenta en
+Resend, verificar el dominio serfuplagas.cl (DNS) y cargar `RESEND_API_KEY` +
+`EMAIL_FROM` en Vercel.
+
+**Pendiente Fase 3 restante:** editor visual de layouts/estaciones; PWA offline.

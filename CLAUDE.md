@@ -132,10 +132,24 @@ La **fuente de verdad** está en `docs/` (léela antes de escribir código):
   /ordenes/[id], donde ahora se ven las evidencias). field_data guarda checkin/checkout
   hora+GPS, firma base64 y rutas de fotos.
 
+- **PDF + correo + QR + enlace técnico (11-jun, 6ª sesión, migr. 0014):**
+  PDF del certificado en servidor (`src/lib/pdf/certificate-pdf.tsx`, @react-pdf/renderer,
+  réplica plantilla; datos unificados en `src/lib/cert-view.ts` + `certificates.ts`
+  `getCertificateView` — la hoja imprimible y el PDF comparten el armado). Desde
+  `/terreno/[id]`: Generar/Regenerar PDF (bucket privado `certificados`,
+  `{tenant}/{cert}.pdf`, URL firmada) y Enviar por correo con adjunto
+  (`src/lib/email.ts`, Resend por API HTTP; requiere `RESEND_API_KEY` + `EMAIL_FROM`;
+  sin ellas avisa y no rompe; registra sent_at/sent_to solo si el envío fue OK).
+  **QR de verificación** en PDF y hoja imprimible → página PÚBLICA `/verificar/[code]`
+  (RPC `verify_certificate` SECURITY DEFINER grant anon, solo campos seguros;
+  `certificates.verify_code` uuid único). `NEXT_PUBLIC_SITE_URL` arma el enlace.
+  `/tecnicos`: selector para enlazar `technicians.profile_id` (valida tenant).
+  Test del PDF: `npx tsx migration/test-pdf.mts` (PDFs de muestra con datos reales).
+
 - **PENDIENTE (lo próximo, en orden):**
-  1. **Fase 3 restante**: PDF del certificado a Storage + envío por correo (necesita
-     proveedor de email), editor visual de layouts/estaciones, QR de verificación
-     pública, PWA offline para técnicos.
+  1. **Configuración de Carlos (guiada):** cuenta Resend + DNS de serfuplagas.cl +
+     `RESEND_API_KEY`/`EMAIL_FROM`/`NEXT_PUBLIC_SITE_URL` en Vercel.
+  2. **Fase 3 restante**: editor visual de layouts/estaciones, PWA offline para técnicos.
   2. Seguir el roadmap de paridad (SII/Portal, CRM, cartola, RR.HH., IA-UV — ver `docs/06`).
   3. **Limpiezas/tareas de Carlos:** crear técnicos en `/tecnicos`; borrar test `dasda` + clientes
      duplicados (Globe ×3, El Gran Corte ×2…), 2 RUT sin DV (Educain, El Gran Corte), RUT de ABINGRAF;

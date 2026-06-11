@@ -44,7 +44,7 @@ export default async function MapaPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
+      <div className="modulo-sticky-top">
         <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
           <MapPin className="text-primary size-6" aria-hidden />
           Mapa

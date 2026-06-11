@@ -104,3 +104,29 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 }
+
+/* ── Cabecera sticky de módulo (réplica del .modulo-sticky-top de la v1) ──
+   Uso: envolver el bloque título(+toolbar) de cada módulo. Se ancla bajo la
+   cabecera fija (56px) — y bajo el menú móvil (48px) en pantallas chicas — y
+   expande con margen negativo para cubrir el padding del contenido
+   (main: p-4 en móvil, p-6 en md+). */
+.modulo-sticky-top {
+  position: sticky;
+  top: 104px; /* 56 cabecera + 48 menú móvil */
+  z-index: 20;
+  background: var(--background);
+  margin: -1rem -1rem 0;
+  padding: 1rem 1rem 0.75rem;
+}
+@media (min-width: 768px) {
+  .modulo-sticky-top {
+    top: 56px;
+    margin: -1.5rem -1.5rem 0;
+    padding: 1.5rem 1.5rem 0.75rem;
+  }
+}
+@media print {
+  .modulo-sticky-top {
+    position: static;
+  }
+}

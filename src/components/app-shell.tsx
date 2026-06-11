@@ -1,6 +1,10 @@
 import { Brand } from "@/components/brand";
 import { SignOutButton } from "@/components/sign-out-button";
 import { MobileNav, SidebarNav } from "@/components/sidebar-nav";
+import pkg from "../../package.json";
+
+/** Versión publicada (de package.json; se sube en cada sesión de despliegue). */
+const APP_VERSION = `v${pkg.version}`;
 
 /**
  * Marco de la aplicación tras iniciar sesión, replicando el rediseño de la v1
@@ -24,6 +28,10 @@ export function AppShell({
       <header className="bg-navy-dark fixed inset-x-0 top-0 z-20 flex h-14 items-center justify-between gap-4 px-4 shadow-[0_1px_0_rgba(0,0,0,.28)] md:px-5">
         <div className="flex items-center gap-3">
           <Brand tone="light" />
+          {/* Versión publicada, como en la v1 (junto a la marca, tenue) */}
+          <span className="text-[10px] tracking-wide text-white/50" title="Versión publicada">
+            {APP_VERSION}
+          </span>
           <span className="hidden border-l border-white/10 pl-3 text-sm text-white/60 md:inline">
             {tenantName}
           </span>
