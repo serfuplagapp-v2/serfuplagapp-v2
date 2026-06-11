@@ -193,6 +193,36 @@ export async function createContact(
   return { error: null };
 }
 
+export async function updateContact(
+  contactId: string,
+  clientId: string,
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  await requireEnabledProfile();
+  const name = str(formData, "name");
+  if (!name) return { error: "El nombre del contacto es obligatorio." };
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase
+    .from("contacts")
+    .update({
+      name,
+      role: strOrNull(formData, "role"),
+      phone: strOrNull(formData, "phone"),
+      email: strOrNull(formData, "email"),
+      branch_id: strOrNull(formData, "branch_id"),
+      es_destinatario: bool(formData, "es_destinatario"),
+      es_cc: bool(formData, "es_cc"),
+      recibe_whatsapp: bool(formData, "recibe_whatsapp"),
+    })
+    .eq("id", contactId);
+
+  if (error) return { error: "No se pudieron guardar los cambios del contacto." };
+  revalidatePath(`/clientes/${clientId}`);
+  return { error: null };
+}
+
 export async function deleteContact(
   contactId: string,
   clientId: string,
@@ -201,4 +231,51 @@ export async function deleteContact(
   const supabase = await createSupabaseServerClient();
   await supabase.from("contacts").delete().eq("id", contactId);
   revalidatePath(`/clientes/${clientId}`);
+}
+
+// ===========================================================================
+// Plantilla de correo del cliente (réplica pestaña "Correo" v1)
+// ===========================================================================
+const EMAILS_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Valida una lista "a@b.cl, c@d.cl" y la devuelve normalizada (o null si vacía). */
+function normalizeEmailList(raw: string): { value: string | null; error: string | null } {
+  const items = raw
+    .split(/[,;]/)
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  if (!items.length) return { value: null, error: null };
+  const bad = items.find((e) => !EMAILS_RE.test(e));
+  if (bad) return { value: null, error: `"${bad}" no parece un correo válido.` };
+  return { value: items.join(", "), error: null };
+}
+
+export async function saveEmailTemplate(
+  clientId: string,
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const { tenantId } = await requireEnabledProfile();
+
+  const to = normalizeEmailList(str(formData, "to_emails"));
+  if (to.error) return { error: `Destinatario: ${to.error}` };
+  const cc = normalizeEmailList(str(formData, "cc_emails"));
+  if (cc.error) return { error: `CC: ${cc.error}` };
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.from("email_templates").upsert(
+    {
+      tenant_id: tenantId,
+      client_id: clientId,
+      to_emails: to.value,
+      cc_emails: cc.value,
+      subject: strOrNull(formData, "subject"),
+      body: strOrNull(formData, "body"),
+    },
+    { onConflict: "client_id" },
+  );
+
+  if (error) return { error: "No se pudo guardar la plantilla de correo." };
+  revalidatePath(`/clientes/${clientId}`);
+  return { error: null };
 }

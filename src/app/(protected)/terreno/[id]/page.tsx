@@ -62,9 +62,18 @@ export default async function CertificadoPage({
     pdfUrl = signed?.signedUrl ?? null;
   }
 
-  // Correo sugerido: el firmante del servicio o, si no hay, el contacto
-  // destinatario del cliente (priorizando el de la misma sucursal).
-  let prefillEmail = view.correoFirmante;
+  // Correo sugerido (cadena v1): plantilla de correo del cliente → firmante
+  // del servicio → contacto destinatario (priorizando el de la misma sucursal).
+  let prefillEmail = "";
+  if (view.clientId) {
+    const { data: tpl } = await supabase
+      .from("email_templates")
+      .select("to_emails")
+      .eq("client_id", view.clientId)
+      .maybeSingle();
+    prefillEmail = tpl?.to_emails?.split(",")[0]?.trim() ?? "";
+  }
+  if (!prefillEmail) prefillEmail = view.correoFirmante;
   if (!prefillEmail && view.clientId) {
     const { data: contactos } = await supabase
       .from("contacts")

@@ -638,6 +638,35 @@ export interface Database {
         Update: { kind?: PredefinedTextKind; body?: string; sort_order?: number; active?: boolean };
         Relationships: [];
       };
+      email_templates: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          client_id: string;
+          to_emails: string | null;
+          cc_emails: string | null;
+          subject: string | null;
+          body: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          client_id: string;
+          to_emails?: string | null;
+          cc_emails?: string | null;
+          subject?: string | null;
+          body?: string | null;
+        };
+        Update: {
+          to_emails?: string | null;
+          cc_emails?: string | null;
+          subject?: string | null;
+          body?: string | null;
+        };
+        Relationships: [];
+      };
       certificates: {
         Row: {
           id: string;

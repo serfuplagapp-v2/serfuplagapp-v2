@@ -20,13 +20,17 @@ import {
   deleteBranch,
   deleteClient,
   deleteContact,
+  saveEmailTemplate,
+  updateBranch,
   updateClient,
+  updateContact,
   createBranch,
   createContact,
 } from "../actions";
 import { ClientForm } from "../client-form";
 import { BranchForm } from "../branch-form";
 import { ContactForm } from "../contact-form";
+import { EmailTemplateForm } from "../email-template-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmSubmit } from "@/components/confirm-submit";
@@ -65,6 +69,7 @@ export default async function ClienteDetallePage({
     { data: layouts },
     { data: movs },
     typesRes,
+    { data: emailTpl },
   ] = await Promise.all([
     supabase
       .from("branches")
@@ -110,6 +115,11 @@ export default async function ClienteDetallePage({
       .order("date", { ascending: false })
       .limit(5),
     supabase.from("service_types").select("id, name"),
+    supabase
+      .from("email_templates")
+      .select("to_emails, cc_emails, subject, body")
+      .eq("client_id", id)
+      .maybeSingle(),
   ]);
 
   const branchList = branches ?? [];
@@ -288,26 +298,39 @@ export default async function ClienteDetallePage({
           {branchList.length > 0 && (
             <ul className="flex flex-col divide-y rounded-lg border">
               {branchList.map((b) => (
-                <li key={b.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                  <div>
-                    <p className="font-medium">{b.name}</p>
-                    {b.address && (
-                      <p className="text-muted-foreground flex items-center gap-1 text-sm">
-                        <MapPin className="size-3.5" />
-                        {b.address}
-                      </p>
-                    )}
+                <li key={b.id} className="flex flex-col gap-2 px-4 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-medium">{b.name}</p>
+                      {b.address && (
+                        <p className="text-muted-foreground flex items-center gap-1 text-sm">
+                          <MapPin className="size-3.5" />
+                          {b.address}
+                        </p>
+                      )}
+                    </div>
+                    <form action={deleteBranch.bind(null, b.id, client.id)}>
+                      <ConfirmSubmit
+                        variant="ghost"
+                        size="icon"
+                        message={`¿Eliminar la sucursal "${b.name}"?`}
+                        className="text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="size-4" />
+                      </ConfirmSubmit>
+                    </form>
                   </div>
-                  <form action={deleteBranch.bind(null, b.id, client.id)}>
-                    <ConfirmSubmit
-                      variant="ghost"
-                      size="icon"
-                      message={`¿Eliminar la sucursal "${b.name}"?`}
-                      className="text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="size-4" />
-                    </ConfirmSubmit>
-                  </form>
+                  <details>
+                    <summary className="text-primary cursor-pointer text-xs font-medium select-none">
+                      Editar sucursal
+                    </summary>
+                    <div className="mt-2">
+                      <BranchForm
+                        action={updateBranch.bind(null, b.id, client.id)}
+                        defaultValues={{ name: b.name, address: b.address }}
+                      />
+                    </div>
+                  </details>
                 </li>
               ))}
             </ul>
@@ -359,23 +382,76 @@ export default async function ClienteDetallePage({
                       {c.recibe_whatsapp && <Badge variant="success">WhatsApp</Badge>}
                     </div>
                   </div>
-                  <form action={deleteContact.bind(null, c.id, client.id)}>
-                    <ConfirmSubmit
-                      variant="ghost"
-                      size="icon"
-                      message={`¿Eliminar el contacto "${c.name}"?`}
-                      className="text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="size-4" />
-                    </ConfirmSubmit>
-                  </form>
+                  <div className="flex flex-col items-end gap-1">
+                    <form action={deleteContact.bind(null, c.id, client.id)}>
+                      <ConfirmSubmit
+                        variant="ghost"
+                        size="icon"
+                        message={`¿Eliminar el contacto "${c.name}"?`}
+                        className="text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="size-4" />
+                      </ConfirmSubmit>
+                    </form>
+                  </div>
                 </li>
               ))}
             </ul>
           )}
+          {contactList.length > 0 && (
+            <details>
+              <summary className="text-primary cursor-pointer text-xs font-medium select-none">
+                Editar un contacto existente
+              </summary>
+              <div className="mt-2 flex flex-col gap-2">
+                {contactList.map((c) => (
+                  <details key={`edit-${c.id}`} className="rounded-lg border px-3 py-2">
+                    <summary className="cursor-pointer text-sm select-none">{c.name}</summary>
+                    <div className="mt-2">
+                      <ContactForm
+                        action={updateContact.bind(null, c.id, client.id)}
+                        branches={branchList.map((b) => ({ id: b.id, name: b.name }))}
+                        defaultValues={{
+                          name: c.name,
+                          role: c.role,
+                          phone: c.phone,
+                          email: c.email,
+                          branch_id: c.branch_id,
+                          es_destinatario: c.es_destinatario,
+                          es_cc: c.es_cc,
+                          recibe_whatsapp: c.recibe_whatsapp,
+                        }}
+                      />
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </details>
+          )}
           <ContactForm
             action={createContact.bind(null, client.id)}
             branches={branchList.map((b) => ({ id: b.id, name: b.name }))}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Plantilla de correo (réplica pestaña "Correo" v1) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="text-primary size-4" aria-hidden />
+            Plantilla de correo
+          </CardTitle>
+          <CardDescription>
+            A quién y con qué texto se envían los correos de este cliente (certificados y
+            avisos de servicio). Si está vacía, se usa el contacto marcado como
+            destinatario.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <EmailTemplateForm
+            action={saveEmailTemplate.bind(null, client.id)}
+            defaultValues={emailTpl}
           />
         </CardContent>
       </Card>

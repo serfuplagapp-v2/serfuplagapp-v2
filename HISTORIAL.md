@@ -465,6 +465,37 @@ Resend, verificar el dominio serfuplagas.cl (DNS) y cargar `RESEND_API_KEY` +
 
 **Pendiente Fase 3 restante:** editor visual de layouts/estaciones; PWA offline.
 
+## 2026-06-11 (8ª sesión) — Revisión módulo a módulo: CLIENTES
+
+Se acordó el plan de revisión módulo por módulo (`docs/07_PLAN_REVISION_MODULOS.md`);
+Carlos pidió partir por Clientes.
+
+**Limpieza de datos APLICADA en producción** (`migration/limpieza-clientes.mjs`,
+transaccional con simulación previa):
+- Cliente de prueba `dasda` eliminado (con su visita de prueba).
+- **El Gran Corte SpA** fusionado (2 fichas → 1): la sucursal San Bernardo se
+  movió a la ficha con operación; contacto duplicado eliminado; RUT corregido
+  a 77.377.229-0 (DV calculado y validado).
+- **Globe S.A.** fusionado (3 fichas → 1): las 2 fichas con RUT erróneo se
+  eliminaron (sucursales eran duplicados de las reales); el contacto Ana María
+  Fernández se movió a la ficha real (sucursal Burgos); contacto mal etiquetado
+  eliminado; además se fusionó la sucursal Apoquindo duplicada de la ficha real.
+- RUTs corregidos: **Educain 77.901.786-9** (el DV estaba pegado al número) y
+  **ABINGRAF 77.325.180-0** (encontrado en su certificado importado).
+
+**Mejoras de paridad v1 construidas:**
+- **Plantilla de correo por cliente** (réplica pestaña "Correo" v1): migración
+  **0015** `email_templates` (1 por cliente: destinatarios, CC, asunto, cuerpo
+  con variables {cliente}, {servicios}, {fecha_servicio}…), card en la ficha,
+  validación de correos. El envío de certificado ahora sugiere el destinatario
+  con la cadena v1: **plantilla → firmante → contacto destinatario**. Los
+  correos automáticos de Agenda la usarán también.
+- **Editar sucursales y contactos** desde la ficha (antes solo crear/borrar):
+  BranchForm/ContactForm reutilizables con modo edición, action updateContact.
+
+**Pendiente del módulo Clientes** (para cuando Carlos lo pruebe): geocodificar
+las 5 sucursales sin coordenadas; "tipo de cliente" v1 no importado.
+
 ## 2026-06-11 (7ª sesión) — Correo vía Microsoft Graph (como v1) + certificado en formato v1 exacto
 
 **Revisión de la v1 pedida por Carlos** (functions/correo.js, functions/pdf.js,
