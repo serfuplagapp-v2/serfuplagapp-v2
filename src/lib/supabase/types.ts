@@ -33,6 +33,9 @@ export type MovementStatus =
   | "rechazado";
 export type TaskPriority = "alta" | "normal";
 export type TaskStatus = "pendiente" | "hecha";
+export type PredefinedTextKind = "trabajo" | "observacion" | "recomendacion";
+/** jsonb genérico (datos heredados de la v1 sin esquema fijo). */
+export type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
 
 type Timestamps = { created_at: string; updated_at: string };
 
@@ -425,6 +428,7 @@ export interface Database {
           dte_folio: string | null;
           oc_number: string | null;
           oc_file_path: string | null;
+          legacy_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -442,6 +446,7 @@ export interface Database {
           dte_folio?: string | null;
           oc_number?: string | null;
           oc_file_path?: string | null;
+          legacy_id?: string | null;
         };
         Update: {
           client_id?: string | null;
@@ -507,7 +512,9 @@ export interface Database {
           sii_type: number | null;
           folio: string | null;
           xml_path: string | null;
+          pdf_path: string | null;
           status: string | null;
+          legacy_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -518,13 +525,223 @@ export interface Database {
           sii_type?: number | null;
           folio?: string | null;
           xml_path?: string | null;
+          pdf_path?: string | null;
           status?: string | null;
+          legacy_id?: string | null;
         };
         Update: {
           sii_type?: number | null;
           folio?: string | null;
           xml_path?: string | null;
+          pdf_path?: string | null;
           status?: string | null;
+        };
+        Relationships: [];
+      };
+      products: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          name: string;
+          active: boolean;
+          favorito: boolean;
+          dosis: string | null;
+          formulacion: string | null;
+          concentracion: string | null;
+          ingrediente_activo: string | null;
+          isp: string | null;
+          laboratorio: string | null;
+          unidad: string | null;
+          service_names: string[] | null;
+          legacy_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          name: string;
+          active?: boolean;
+          favorito?: boolean;
+          dosis?: string | null;
+          formulacion?: string | null;
+          concentracion?: string | null;
+          ingrediente_activo?: string | null;
+          isp?: string | null;
+          laboratorio?: string | null;
+          unidad?: string | null;
+          service_names?: string[] | null;
+          legacy_id?: string | null;
+        };
+        Update: {
+          name?: string;
+          active?: boolean;
+          favorito?: boolean;
+          dosis?: string | null;
+          formulacion?: string | null;
+          concentracion?: string | null;
+          ingrediente_activo?: string | null;
+          isp?: string | null;
+          laboratorio?: string | null;
+          unidad?: string | null;
+          service_names?: string[] | null;
+        };
+        Relationships: [];
+      };
+      pests: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          name: string;
+          scientific_name: string | null;
+          active: boolean;
+          legacy_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          name: string;
+          scientific_name?: string | null;
+          active?: boolean;
+          legacy_id?: string | null;
+        };
+        Update: { name?: string; scientific_name?: string | null; active?: boolean };
+        Relationships: [];
+      };
+      predefined_texts: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          kind: PredefinedTextKind;
+          body: string;
+          sort_order: number;
+          active: boolean;
+          legacy_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          kind: PredefinedTextKind;
+          body: string;
+          sort_order?: number;
+          active?: boolean;
+          legacy_id?: string | null;
+        };
+        Update: { kind?: PredefinedTextKind; body?: string; sort_order?: number; active?: boolean };
+        Relationships: [];
+      };
+      certificates: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          folio: number;
+          service_id: string | null;
+          client_id: string | null;
+          branch_id: string | null;
+          issued_at: string | null;
+          service_date: string | null;
+          data: Json;
+          pdf_path: string | null;
+          legacy_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          folio: number;
+          service_id?: string | null;
+          client_id?: string | null;
+          branch_id?: string | null;
+          issued_at?: string | null;
+          service_date?: string | null;
+          data?: Json;
+          pdf_path?: string | null;
+          legacy_id?: string | null;
+        };
+        Update: {
+          folio?: number;
+          service_id?: string | null;
+          client_id?: string | null;
+          branch_id?: string | null;
+          issued_at?: string | null;
+          service_date?: string | null;
+          data?: Json;
+          pdf_path?: string | null;
+        };
+        Relationships: [];
+      };
+      layouts: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          name: string;
+          client_id: string | null;
+          branch_id: string | null;
+          bg_color: string | null;
+          bg_image: string | null;
+          header: Json | null;
+          elements: Json;
+          thumbnail: string | null;
+          snapshot_url: string | null;
+          snapshot_w: number | null;
+          snapshot_h: number | null;
+          legacy_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          name: string;
+          client_id?: string | null;
+          branch_id?: string | null;
+          bg_color?: string | null;
+          bg_image?: string | null;
+          header?: Json | null;
+          elements?: Json;
+          thumbnail?: string | null;
+          snapshot_url?: string | null;
+          snapshot_w?: number | null;
+          snapshot_h?: number | null;
+          legacy_id?: string | null;
+        };
+        Update: {
+          name?: string;
+          client_id?: string | null;
+          branch_id?: string | null;
+          bg_color?: string | null;
+          bg_image?: string | null;
+          header?: Json | null;
+          elements?: Json;
+          thumbnail?: string | null;
+          snapshot_url?: string | null;
+        };
+        Relationships: [];
+      };
+      tenant_settings: {
+        Row: {
+          tenant_id: string;
+          cert_next_folio: number;
+          quote_next_folio: number;
+          data: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          tenant_id: string;
+          cert_next_folio?: number;
+          quote_next_folio?: number;
+          data?: Json;
+        };
+        Update: {
+          cert_next_folio?: number;
+          quote_next_folio?: number;
+          data?: Json;
         };
         Relationships: [];
       };

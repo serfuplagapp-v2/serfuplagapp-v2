@@ -100,9 +100,21 @@ La **fuente de verdad** está en `docs/` (léela antes de escribir código):
   Mapeos: Facturación→`/comercial`, RR.HH.→`/tecnicos`, Agenda Op.→`/agenda/ruta`.
   OJO: `/panel` usa `getSessionProfile` (NO `requireEnabledProfile`, evita bucle).
 
+- **Importación v1 Fase 3 HECHA (11-jun, 3ª sesión):** migración **0011** (products, pests,
+  predefined_texts, certificates SIN unique en folio, layouts con elementos jsonb,
+  tenant_settings con folios, legacy_id en movements/dte). Cargado y verificado:
+  **386 certificados** (356 con OT; folio máx 30.697 → **siguiente = 30.698**, de
+  empresa_config), **66 movimientos** (cuadre exacto $1.151.963 cobros + 2 facturas
+  huérfanas), **5 DTE**, **12 layouts** (11 con sucursal; cliente_id v1 de layouts eran
+  SUCURSALES v2), **43 productos, 14 plagas, 17 textos**. tenant_settings.data trae
+  rep_legal/rep_tec/res_san/colores/firma para el PDF. UI: `/terreno`=certificados,
+  `/layouts`=galería (NUNCA seleccionar bg_image en listas), `/stock`=catálogos.
+  Tooling: migration/*-fase3*.mjs. Pruebas de Carlos: borrar registros "PRUEBA".
+
 - **PENDIENTE (lo próximo, en orden):**
-  1. **Fase 3 — Terreno/certificados**: tablas products/certificates/layouts/stations/station_checks;
-     generar el certificado PDF con folio correlativo desde **30697** usando la data en `services.legacy_data`.
+  1. **Fase 3 — Terreno**: captura en terreno + generar el certificado PDF con folio
+     correlativo desde **30.698** (`tenant_settings.cert_next_folio`; firma y datos
+     legales en `tenant_settings.data`) + editor de layouts/estaciones.
   2. Seguir el roadmap de paridad (SII/Portal, CRM, cartola, RR.HH., IA-UV — ver `docs/06`).
   3. **Limpiezas/tareas de Carlos:** crear técnicos en `/tecnicos`; borrar test `dasda` + clientes
      duplicados (Globe ×3, El Gran Corte ×2…), 2 RUT sin DV (Educain, El Gran Corte), RUT de ABINGRAF;

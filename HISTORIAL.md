@@ -274,3 +274,50 @@ la página visible; consultas en `Promise.all`; sin consultas en el layout (el m
 consulta nada). Migraciones 0009/0010 aplicadas en producción.
 
 **Siguiente:** Fase 3 — Terreno/certificados (el módulo de mayor valor pendiente).
+
+## 2026-06-11 (3ª sesión) — Importación v1: certificados, facturación, layouts y catálogos
+
+**Decisión de Carlos:** importar la información de la v1 para layouts, facturación,
+órdenes (ya estaban desde 1-may) y generación de certificados — "todo".
+
+**Migración 0011** (aplicada): `products`, `pests`, `predefined_texts`, `certificates`
+(folio entero, FKs compuestas, SIN unique en folio porque la v1 tiene re-emisiones),
+`layouts` (elementos/estaciones en jsonb; OJO: bg_image puede pesar cientos de KB —
+las listas NUNCA deben seleccionarlo), `tenant_settings` (folio siguiente de certificado
+y cotización + config legal/PDF en jsonb), y `legacy_id` en movements/dte_documents
+(+`pdf_path` en dte).
+
+**Importado y VERIFICADO (tooling en `migration/`: diagnose-fase3 / export-fase3 /
+inspect-fase3 / check-layout-links / load-fase3 [--load] / load-fase3-facturas-huerfanas /
+verify-fase3):**
+
+- **386 certificados** (356 enlazados a su OT por `legacy_id`; folio 8.730→30.697;
+  2 folios con re-emisiones v1: 29916×3, 29933×5). **Folio siguiente: 30.698**
+  (de `empresa_config.folio_actual` — corrige el 30.697 que se creía antes).
+- **66 movimientos** de facturación: 64 cobros v1 (mayo $305.873 + junio $846.090 =
+  $1.151.963, cuadre EXACTO) + 2 facturas cuyo cobro fue borrado en la v1
+  (Falabella $142.943 + una factura de PRUEBA a la propia Serfuplagas $119.000).
+  Estados mapeados: borrador→aprobado, facturado, pagado, anulado→rechazado.
+  62 enlaces movimiento↔OT (`movement_services`).
+- **5 DTE** en `dte_documents` (4 tipo 33 + 1 NC tipo 61, con sus PDF urls).
+- **12 layouts** (203 estaciones/figuras en total; 11 enlazados a su sucursal —
+  los cliente_id v1 de layouts eran SUCURSALES v2, se resolvió vía `branches.legacy_id`).
+- **Catálogos:** 43 productos, 14 plagas, 17 textos predefinidos.
+- **tenant_settings:** folios + rep. legal/técnico, resolución sanitaria, colores PDF,
+  firma técnico (base64) — todo lo que el PDF del certificado necesita en Fase 3.
+
+**Hallazgos de enlace (resueltos en el transform):** los `cliente_id` v1 de cobros/
+layouts/certificados podían apuntar a docs que en la v2 son sucursales (fusión por RUT) →
+cadena de resolución legacy cliente → legacy sucursal → RUT → OT. 7 certificados quedaron
+sin cliente (visitas técnicas y un cliente de prueba); data preservada en jsonb.
+
+**UI para ver lo importado (mismo patrón server-side):** `/terreno` = historial de
+certificados (busca por folio o cliente, 50/pág), `/layouts` = galería de planos con
+miniatura y sucursal, `/stock` = catálogos (productos/plagas/textos). `/comercial` ya
+muestra los 66 movimientos importados.
+
+**Pendiente de Carlos:** borrar los registros de PRUEBA si corresponde (movimiento
+"PRUEBA CLIENTE DTE LTDA" y factura de prueba a Serfuplagas; certificado folio 30005).
+
+**Siguiente:** Fase 3 — generación de certificados nuevos (PDF con folio desde 30.698,
+firma y datos legales ya disponibles en `tenant_settings`) + captura en terreno.
