@@ -140,3 +140,25 @@ de la fase). Tooling de Excel quedó disponible por si se reutiliza (bancos, etc
 
 **Siguiente:** Carlos empieza a registrar movimientos (cierre de Fase 2). Luego: geocodificar
 las 5 sucursales sin coordenadas y mapa-en-Agenda; más adelante Fase 3 (terreno).
+
+## 2026-06-10 — Paridad total v1→v2: inicio del Planificador completo
+
+**Decisión de Carlos:** portar la v1 COMPLETA a la v2 (paridad total) y mantener la
+**historia desde el 1-may-2026**. Se generó un reporte de porte con una revisión en
+paralelo de las 8 áreas de la v1 (8 agentes + síntesis) → `docs/06_REVISION_V1_PORTE.md`.
+La v1 es un ERP completo; el roadmap acordado: cerrar Fase 2 (uso) → **completar el
+Planificador** → Terreno/certificados → SII/Portal → CRM/cartola/RR.HH./IA-UV.
+
+**Primer increment (cierre real de Fase 1 — Planificador):**
+
+- **`src/lib/scheduling.ts`:** motor de agendamiento portado de la v1
+  (`core/periodicidades.js` + `data/feriados.js`) — catálogo de periodicidades
+  (semanal…anual), modos de visita (1er hábil, 2° viernes, días 1 y 15, etc.),
+  feriados chilenos y `ajustarADiaHabil`. Funciones puras, en TypeScript.
+- **Migración 0006:** agrega a `contracts` el detalle fino de periodicidad
+  (`visit_mode`, `visit_params`, `allowed_days`, `preferred_time`) para que el
+  generador sepa exactamente cuándo cae cada visita.
+
+**Siguiente:** importar la historia desde el 1-may (programas_servicio→contracts,
+ordenes_trabajo→services) con vista previa para revisar (huérfanos, cuadre), y
+wirear el generador de servicios + el calendario (drag&drop + ruta del día).

@@ -219,6 +219,10 @@ export interface Database {
           oc_number: string | null;
           oc_file_path: string | null;
           billing_mode: BillingMode;
+          visit_mode: string | null;
+          visit_params: Record<string, number>;
+          allowed_days: number[] | null;
+          preferred_time: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -235,6 +239,10 @@ export interface Database {
           oc_number?: string | null;
           oc_file_path?: string | null;
           billing_mode?: BillingMode;
+          visit_mode?: string | null;
+          visit_params?: Record<string, number>;
+          allowed_days?: number[] | null;
+          preferred_time?: string | null;
         };
         Update: {
           service_type_id?: string;
@@ -246,6 +254,10 @@ export interface Database {
           oc_number?: string | null;
           oc_file_path?: string | null;
           billing_mode?: BillingMode;
+          visit_mode?: string | null;
+          visit_params?: Record<string, number>;
+          allowed_days?: number[] | null;
+          preferred_time?: string | null;
         };
         Relationships: [];
       };
