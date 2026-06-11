@@ -177,3 +177,61 @@ Planificador** → Terreno/certificados → SII/Portal → CRM/cartola/RR.HH./IA
 
 **Siguiente:** wirear el generador de servicios (motor 0006) + completar el calendario
 (drag&drop, ruta del día), y seguir el roadmap de paridad (Terreno/certificados, etc.).
+
+## 2026-06-11 — Generador de servicios + calendario completo (drag&drop, ruta del día)
+
+**Qué se construyó (cierre del Planificador):**
+
+- **Motor de generación** (`src/lib/scheduling.ts` → `generarVisitas`): dado un contrato
+  (frecuencia + modo de visita + días permitidos + hora preferida) y un rango, calcula
+  todas las visitas, ajustadas a día hábil y feriados chilenos. Los `visit_mode`
+  heredados de la v1 que el motor no conocía (`default`, `semana_x`, `1`, null) se
+  normalizan a un modo válido según la frecuencia.
+- **Política "roll-forward" (clave):** como la agenda YA tiene la operación real
+  importada (1.238 servicios, may-2026→may-2027), el generador propone SOLO fechas
+  posteriores al último servicio existente de cada contrato (programa completo si el
+  contrato no tiene servicios). **Validado contra los 135 contratos reales: 914
+  propuestas nuevas, 0 duplicados/casi-duplicados.**
+- **`/agenda/generar`:** vista previa (total, desglose por mes, avisos de contratos sin
+  sucursal clara y de truncado en 5.000) → botón que crea los servicios como `propuesto`.
+  La vista previa y la inserción usan el MISMO cálculo (`src/lib/generator.ts`).
+- **`/agenda/propuestas`:** aprobar (→ `programado`) o descartar, por cliente o todas.
+- **Calendario con drag&drop** (`week-grid.tsx`): arrastrar una visita a otro día la
+  reprograma conservando la hora; selector de técnico en cada tarjeta (actualiza
+  `field_status` planificada↔asignada).
+- **`/agenda/ruta` (ruta del día):** paradas numeradas en el mapa, orden por vecino más
+  cercano (instantáneo, sin costo de API, portado de la v1 `optimizarRuta`), botón
+  "Optimizar por calles" (Routes API; requiere `GOOGLE_MAPS_SERVER_KEY` en el servidor —
+  si no está, sigue con cercanía), enlace "Abrir en Google Maps" y guardar ruta
+  (migración **0008**: `routes.polyline/distance_km/duration_min`).
+- **`/tecnicos`:** alta y activar/desactivar técnicos (la tabla estaba vacía y sin UI).
+
+**Revisión adversarial (36 agentes) y arreglos aplicados:**
+
+- **Zona horaria (el grave):** `santiagoLocalToISO` solo era correcta en servidores UTC;
+  en una máquina en hora de Chile guardaba la hora 3–4 h corrida. Reescrita con
+  `Intl.DateTimeFormat`/formatToParts + doble iteración; **probada en 3 zonas de
+  servidor (Chile/UTC/Tokio) incluyendo bordes del cambio de hora: 15/15 ✅**
+  (`migration/test-datetime.mts`).
+- El filtro por cliente del generador se ignoraba (nombre de campo `client` vs
+  `client_id`): corregido.
+- Errores de guardado ya no pasan en silencio: lotes de `generateProposals` (aviso de
+  generación parcial), aprobar/descartar, asignación de técnico en `createService`,
+  y `saveRoute` (valida paradas contra la base, chequea errores y borra la ruta si
+  las paradas fallan — nada queda a medias).
+- Motor: invariante de zona horaria documentada y caso `puntual` corregido (mezclaba
+  UTC/local); tipos de la ruta movidos fuera del archivo `"use server"`;
+  `visit_params` (jsonb) saneado con `parseVisitParams`; fecha/hora obligatoria en el
+  formulario de servicio; null-check en drag&drop; mensaje guía cuando no hay técnicos.
+
+**Verificado:** typecheck/lint/build ✅ · test motor vs contratos reales (0 duplicados) ✅ ·
+test zona horaria 15/15 ✅. Migración 0008 aplicada en producción.
+
+**Pendiente que depende de Carlos:**
+- Crear los técnicos reales en `/tecnicos` y asignarlos en la agenda.
+- (Opcional) crear una llave de Google con Routes API habilitada y ponerla como
+  `GOOGLE_MAPS_SERVER_KEY` en Vercel para "Optimizar por calles"; sin ella la ruta
+  funciona por cercanía igual.
+
+**Siguiente:** Fase 3 — Terreno/certificados (products/certificates/layouts/stations;
+certificado PDF con folio desde 30.697 usando `services.legacy_data`).

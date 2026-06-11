@@ -75,12 +75,13 @@ export function ServiceForm({
           </Select>
         </div>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="scheduled_at">Fecha y hora</Label>
+          <Label htmlFor="scheduled_at">Fecha y hora *</Label>
           <Input
             id="scheduled_at"
             name="scheduled_at"
             type="datetime-local"
             defaultValue={defaultDate}
+            required
           />
         </div>
       </div>

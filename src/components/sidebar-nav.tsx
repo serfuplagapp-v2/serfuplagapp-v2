@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Home, MapPin, Receipt, Users } from "lucide-react";
+import { CalendarDays, HardHat, Home, MapPin, Receipt, Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,7 @@ export const NAV_ITEMS = [
   { href: "/clientes", label: "Clientes", icon: Users },
   { href: "/mapa", label: "Mapa", icon: MapPin },
   { href: "/agenda", label: "Agenda", icon: CalendarDays },
+  { href: "/tecnicos", label: "Técnicos", icon: HardHat },
   { href: "/comercial", label: "Comercial", icon: Receipt },
 ] as const;
 

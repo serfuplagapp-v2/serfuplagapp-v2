@@ -73,17 +73,30 @@ La **fuente de verdad** está en `docs/` (léela antes de escribir código):
   - Tooling: `migration/diagnose-ot.mjs`, `import-ot-preview.mjs`, `load-ot.mjs`, `verify-ot.mjs`.
     Migraciones se aplican con `node migration/apply-sql.mjs <archivo.sql>` (conexión en `Secretos/db.txt`).
 
+- **Planificador COMPLETO (11-jun):** generador de servicios + calendario terminados.
+  - **Generador:** `src/lib/generator.ts` (computeProposals) sobre el motor `generarVisitas`
+    de `scheduling.ts`. Política **roll-forward** (solo propone DESPUÉS del último servicio
+    de cada contrato → 0 duplicados, validado con los 135 contratos reales). UI:
+    `/agenda/generar` (vista previa + crear como `propuesto`) y `/agenda/propuestas`
+    (aprobar→`programado` / descartar). visit_mode heredados raros se normalizan.
+  - **Calendario:** drag&drop entre días (conserva la hora) + selector de técnico por
+    tarjeta (`week-grid.tsx`). **Ruta del día** `/agenda/ruta`: vecino más cercano +
+    "Optimizar por calles" (Routes API, requiere env `GOOGLE_MAPS_SERVER_KEY`; opcional),
+    link a Google Maps, guardar ruta (migración **0008** polyline/distance/duration).
+  - **`/tecnicos`:** alta y activar/desactivar técnicos.
+  - **Fix CRÍTICO de zona horaria:** `santiagoLocalToISO` reescrita (la anterior solo era
+    correcta en servidores UTC; en hora de Chile corría la hora 3–4 h). Probada en 3 zonas
+    con bordes de DST (`migration/test-datetime.mts`). Revisión adversarial completa +
+    arreglos de manejo de errores (lotes, rutas, propuestas) aplicados — ver HISTORIAL 11-jun.
+
 - **PENDIENTE (lo próximo, en orden):**
-  1. **Wirear el generador automático**: usar `src/lib/scheduling.ts` para generar `services`
-     con `agenda_status='propuesto'` desde los `contracts` (con su visit_mode/params), + UI para aprobarlos.
-  2. **Completar el calendario** (`/agenda`): drag&drop entre fechas/técnicos + **ruta del día** sobre
-     el mapa (reusar `data/geocoder.js` optimizarRuta + Routes API de la v1).
-  3. **Fase 3 — Terreno/certificados**: tablas products/certificates/layouts/stations/station_checks;
+  1. **Fase 3 — Terreno/certificados**: tablas products/certificates/layouts/stations/station_checks;
      generar el certificado PDF con folio correlativo desde **30697** usando la data en `services.legacy_data`.
-  4. Seguir el roadmap de paridad (SII/Portal, CRM, cartola, RR.HH., IA-UV — ver `docs/06`).
-  5. **Limpiezas de Carlos:** borrar test `dasda` + clientes duplicados (Globe ×3, El Gran Corte ×2…),
-     2 RUT sin DV (Educain, El Gran Corte), RUT de ABINGRAF; geocodificar 5 sucursales sin coords;
-     registrar movimientos en `/comercial` (cierre Fase 2).
+  2. Seguir el roadmap de paridad (SII/Portal, CRM, cartola, RR.HH., IA-UV — ver `docs/06`).
+  3. **Limpiezas/tareas de Carlos:** crear técnicos en `/tecnicos`; borrar test `dasda` + clientes
+     duplicados (Globe ×3, El Gran Corte ×2…), 2 RUT sin DV (Educain, El Gran Corte), RUT de ABINGRAF;
+     geocodificar 5 sucursales sin coords; registrar movimientos en `/comercial` (cierre Fase 2);
+     (opcional) llave `GOOGLE_MAPS_SERVER_KEY` en Vercel para optimizar rutas por calles.
 
 - **Datos del entorno:** App en https://serfuplagapp-v2.vercel.app · Supabase project ref `dzlgdwtfqlxkibgyxnin`
   (org "Serfuplagas LTDA", región São Paulo) · GitHub `serfuplagapp-v2/serfuplagapp-v2` (público).

@@ -343,6 +343,9 @@ export interface Database {
           technician_id: string | null;
           date: string;
           status: RouteStatus;
+          polyline: string | null;
+          distance_km: number | null;
+          duration_min: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -352,11 +355,17 @@ export interface Database {
           technician_id?: string | null;
           date: string;
           status?: RouteStatus;
+          polyline?: string | null;
+          distance_km?: number | null;
+          duration_min?: number | null;
         };
         Update: {
           technician_id?: string | null;
           date?: string;
           status?: RouteStatus;
+          polyline?: string | null;
+          distance_km?: number | null;
+          duration_min?: number | null;
         };
         Relationships: [];
       };

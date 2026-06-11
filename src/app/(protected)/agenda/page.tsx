@@ -1,5 +1,13 @@
 import Link from "next/link";
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, User } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  Plus,
+  Route,
+  Sparkles,
+} from "lucide-react";
 
 import { requireEnabledProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -11,32 +19,11 @@ import {
   santiagoTime,
   todaySantiago,
 } from "@/lib/datetime";
-import type {
-  ServiceAgendaStatus,
-  ServiceFieldStatus,
-} from "@/lib/supabase/types";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { WeekGrid, type Card, type DayCol } from "./week-grid";
 
-type BadgeVariant = React.ComponentProps<typeof Badge>["variant"];
-
-const AGENDA_BADGE: Record<ServiceAgendaStatus, { label: string; variant: BadgeVariant }> = {
-  propuesto: { label: "Propuesto", variant: "muted" },
-  programado: { label: "Programado", variant: "secondary" },
-  enviado: { label: "Enviado", variant: "secondary" },
-  confirmado: { label: "Confirmado", variant: "success" },
-  reprogramado: { label: "Reprogramado", variant: "warning" },
-  cancelado: { label: "Cancelado", variant: "destructive" },
-};
-
-const FIELD_BADGE: Record<ServiceFieldStatus, { label: string; variant: BadgeVariant }> = {
-  planificada: { label: "Planificada", variant: "muted" },
-  asignada: { label: "Asignada", variant: "secondary" },
-  en_proceso: { label: "En proceso", variant: "warning" },
-  por_validar: { label: "Por validar", variant: "warning" },
-  terminada: { label: "Terminada", variant: "success" },
-};
+export const dynamic = "force-dynamic";
 
 export default async function AgendaPage({
   searchParams,
@@ -51,8 +38,8 @@ export default async function AgendaPage({
     : todaySantiago();
   const monday = mondayOf(base);
   const sunday = addDays(monday, 6);
-  const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
-  const daySet = new Set(days);
+  const dayStrings = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
+  const daySet = new Set(dayStrings);
   const today = todaySantiago();
 
   // Ventana de consulta (superset en UTC con margen ±; el agrupado exacto se
@@ -67,9 +54,9 @@ export default async function AgendaPage({
   const { data: technicians } = await supabase
     .from("technicians")
     .select("id, full_name")
+    .eq("active", true)
     .order("full_name");
   const techList = technicians ?? [];
-  const techNameById = new Map(techList.map((t) => [t.id, t.full_name]));
 
   const { data: servicesRaw } = await supabase
     .from("services")
@@ -80,26 +67,20 @@ export default async function AgendaPage({
     .order("scheduled_at");
   let services = servicesRaw ?? [];
 
-  // Técnicos asignados (tabla puente) para los servicios visibles.
+  // Técnico asignado por servicio (tomamos el primero para el selector del calendario).
   const serviceIds = services.map((s) => s.id);
-  const techsByService = new Map<string, string[]>();
+  const techIdByService = new Map<string, string>();
   if (serviceIds.length > 0) {
     const { data: pairs } = await supabase
       .from("service_technicians")
       .select("service_id, technician_id")
       .in("service_id", serviceIds);
     for (const p of pairs ?? []) {
-      const name = techNameById.get(p.technician_id);
-      if (!name) continue;
-      const arr = techsByService.get(p.service_id) ?? [];
-      arr.push(name);
-      techsByService.set(p.service_id, arr);
+      if (!techIdByService.has(p.service_id)) techIdByService.set(p.service_id, p.technician_id);
     }
     if (tech) {
       const assigned = new Set(
-        (pairs ?? [])
-          .filter((p) => p.technician_id === tech)
-          .map((p) => p.service_id),
+        (pairs ?? []).filter((p) => p.technician_id === tech).map((p) => p.service_id),
       );
       services = services.filter((s) => assigned.has(s.id));
     }
@@ -107,7 +88,7 @@ export default async function AgendaPage({
     services = [];
   }
 
-  // Nombres de cliente / sucursal / tipo de servicio.
+  // Nombres de cliente / sucursal / tipo.
   const clientName = new Map<string, string>();
   const branchName = new Map<string, string>();
   const typeName = new Map<string, string>();
@@ -127,16 +108,36 @@ export default async function AgendaPage({
     for (const t of data ?? []) typeName.set(t.id, t.name);
   }
 
-  // Agrupar por día de Santiago.
-  const byDay = new Map<string, typeof services>();
+  // Conteo de propuestas pendientes (toda la cartera, no solo la semana).
+  const { count: proposedCount } = await supabase
+    .from("services")
+    .select("id", { count: "exact", head: true })
+    .eq("agenda_status", "propuesto");
+
+  // Tarjetas del calendario (solo las que caen en la semana visible).
+  const cards: Card[] = [];
   for (const s of services) {
     if (!s.scheduled_at) continue;
     const d = santiagoDate(s.scheduled_at);
     if (!daySet.has(d)) continue;
-    const arr = byDay.get(d) ?? [];
-    arr.push(s);
-    byDay.set(d, arr);
+    cards.push({
+      id: s.id,
+      date: d,
+      time: santiagoTime(s.scheduled_at),
+      clientName: clientName.get(s.client_id) ?? "Cliente",
+      typeName: typeName.get(s.service_type_id) ?? "",
+      branchName: s.branch_id ? (branchName.get(s.branch_id) ?? null) : null,
+      agendaStatus: s.agenda_status,
+      fieldStatus: s.field_status,
+      technicianId: techIdByService.get(s.id) ?? null,
+    });
   }
+
+  const days: DayCol[] = dayStrings.map((d) => ({
+    date: d,
+    label: dayLabel(d),
+    isToday: d === today,
+  }));
 
   const navHref = (week: string) => {
     const p = new URLSearchParams();
@@ -154,15 +155,35 @@ export default async function AgendaPage({
             Agenda
           </h1>
           <p className="text-muted-foreground text-sm">
-            Semana del {dayLabel(monday)} al {dayLabel(sunday)}.
+            Semana del {dayLabel(monday)} al {dayLabel(sunday)}. Arrastra una visita para cambiarla de día.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/agenda/nuevo">
-            <Plus className="size-4" />
-            Nuevo servicio
-          </Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="outline">
+            <Link href="/agenda/ruta">
+              <Route className="size-4" />
+              Ruta del día
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/agenda/generar">
+              <Sparkles className="size-4" />
+              Generar visitas
+            </Link>
+          </Button>
+          <Button asChild variant={proposedCount ? "default" : "outline"}>
+            <Link href="/agenda/propuestas">
+              <ClipboardList className="size-4" />
+              Propuestas{proposedCount ? ` (${proposedCount})` : ""}
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/agenda/nuevo">
+              <Plus className="size-4" />
+              Nuevo servicio
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -200,71 +221,11 @@ export default async function AgendaPage({
         </form>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-7">
-        {days.map((day) => {
-          const items = byDay.get(day) ?? [];
-          const isToday = day === today;
-          return (
-            <div
-              key={day}
-              className={
-                "bg-card flex min-h-32 flex-col rounded-lg border " +
-                (isToday ? "border-primary ring-primary/30 ring-1" : "")
-              }
-            >
-              <div
-                className={
-                  "rounded-t-lg border-b px-2 py-1.5 text-center text-xs font-semibold capitalize " +
-                  (isToday ? "bg-primary text-primary-foreground" : "text-muted-foreground")
-                }
-              >
-                {dayLabel(day)}
-              </div>
-              <div className="flex flex-col gap-2 p-2">
-                {items.length === 0 ? (
-                  <p className="text-muted-foreground/60 py-2 text-center text-xs">—</p>
-                ) : (
-                  items.map((s) => (
-                    <div
-                      key={s.id}
-                      className="bg-secondary/60 flex flex-col gap-1 rounded-md border-l-4 border-l-primary p-2 text-xs"
-                    >
-                      <div className="flex items-center justify-between gap-1">
-                        <span className="font-semibold">
-                          {s.scheduled_at ? santiagoTime(s.scheduled_at) : ""}
-                        </span>
-                      </div>
-                      <p className="font-medium leading-tight">
-                        {clientName.get(s.client_id) ?? "Cliente"}
-                      </p>
-                      <p className="text-muted-foreground leading-tight">
-                        {typeName.get(s.service_type_id) ?? ""}
-                        {s.branch_id && branchName.get(s.branch_id)
-                          ? ` · ${branchName.get(s.branch_id)}`
-                          : ""}
-                      </p>
-                      {(techsByService.get(s.id) ?? []).length > 0 && (
-                        <p className="text-muted-foreground flex items-center gap-1 leading-tight">
-                          <User className="size-3" />
-                          {(techsByService.get(s.id) ?? []).join(", ")}
-                        </p>
-                      )}
-                      <div className="flex flex-wrap gap-1 pt-0.5">
-                        <Badge variant={AGENDA_BADGE[s.agenda_status].variant}>
-                          {AGENDA_BADGE[s.agenda_status].label}
-                        </Badge>
-                        <Badge variant={FIELD_BADGE[s.field_status].variant}>
-                          {FIELD_BADGE[s.field_status].label}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <WeekGrid
+        days={days}
+        cards={cards}
+        technicians={techList.map((t) => ({ id: t.id, name: t.full_name }))}
+      />
     </div>
   );
 }
