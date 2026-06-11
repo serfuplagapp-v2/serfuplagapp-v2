@@ -130,7 +130,11 @@ export default async function TerrenoPage({
                 const clienteRaw = typeof d.cliente_nombre === "string" ? d.cliente_nombre : "";
                 return (
                   <TableRow key={c.id}>
-                    <TableCell className="font-semibold tabular-nums">{c.folio}</TableCell>
+                    <TableCell className="font-semibold tabular-nums">
+                      <Link href={`/terreno/${c.id}`} className="text-primary hover:underline">
+                        {c.folio}
+                      </Link>
+                    </TableCell>
                     <TableCell className="text-muted-foreground whitespace-nowrap">
                       {c.issued_at ? santiagoDate(c.issued_at) : "—"}
                     </TableCell>

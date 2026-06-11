@@ -240,9 +240,15 @@ export default async function ComercialPage({
             ) : (
               (movements ?? []).map((m) => (
                 <TableRow key={m.id}>
-                  <TableCell className="whitespace-nowrap">{m.date}</TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    <Link href={`/comercial/${m.id}`} className="hover:text-primary hover:underline">
+                      {m.date}
+                    </Link>
+                  </TableCell>
                   <TableCell className="font-medium">
-                    {m.client_id ? clientName.get(m.client_id) ?? "—" : m.client_name_raw ?? "—"}
+                    <Link href={`/comercial/${m.id}`} className="hover:text-primary hover:underline">
+                      {m.client_id ? clientName.get(m.client_id) ?? "—" : m.client_name_raw ?? "—"}
+                    </Link>
                   </TableCell>
                   <TableCell className="text-muted-foreground max-w-xs truncate">
                     {m.description ?? "—"}

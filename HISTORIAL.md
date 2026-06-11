@@ -321,3 +321,52 @@ muestra los 66 movimientos importados.
 
 **Siguiente:** Fase 3 — generación de certificados nuevos (PDF con folio desde 30.698,
 firma y datos legales ya disponibles en `tenant_settings`) + captura en terreno.
+
+## 2026-06-11 (4ª sesión) — Detalle de OT, certificados nuevos, ficha cliente y flujo de facturación
+
+**Decisión de Carlos:** avanzar con la generación de certificados y "lo demás de la app":
+ficha de clientes, edición de órdenes de servicio (en la v1 se llaman **Órdenes de
+Trabajo / OT**) y facturación. Se exploró la v1 a fondo (detalle.js + templates_v2.js)
+para replicar campos, textos y flujo.
+
+**Migración 0012:** `services.field_data` (jsonb — captura de terreno de OTs nuevas;
+`legacy_data` queda como artefacto de importación) + **`next_cert_folio()`**: función SQL
+que entrega el folio siguiente y avanza el contador EN UNA SENTENCIA (atómico, probado
+con rollback contra producción: entrega 30.698 → siguiente 30.699).
+
+**Qué se construyó:**
+
+- **`/ordenes/[id]` — detalle/edición de OT (réplica v1):** datos generales (fecha
+  bloqueada si terminada, técnico, tipo de visita con los 7 valores v1), metodología
+  (default "M.I.P"), grado de infestación, insumos, áreas tratadas, plagas (chips del
+  catálogo), productos usados (filas dinámicas desde el catálogo), trabajo realizado,
+  observaciones/recomendaciones (van al certificado), instrucciones al técnico,
+  firmante (nombre/RUT/correo) y vigencia (30/60/90/180/365). Transiciones de estado
+  (en proceso → por validar), eliminar solo si planificada/asignada (regla v1).
+- **"Cerrar OT y generar certificado"** (botón v1): valida técnico asignado → folio
+  atómico → crea el certificado congelando los datos → OT terminada + completed_at →
+  redirige a la vista del certificado. Si el insert falla, el folio queda saltado
+  (preferible a duplicar).
+- **`/terreno/[id]` — certificado imprimible (réplica plantilla v1 templates_v2):**
+  encabezado con datos legales de `tenant_settings` (razón social, RUT, Res. Sanitaria,
+  representante), folio destacado, identificación del inmueble, diagnóstico previo
+  (plagas+grado), datos del servicio, barra de fechas (servicio/emisión/vigencia),
+  chips de tratamientos, metodología/lugares, tabla de productos ENRIQUECIDA desde el
+  catálogo (Reg. ISP, formulación, ingrediente activo, dosis), observaciones, firma del
+  representante técnico (imagen heredada), leyenda penal exacta de la v1. Botón
+  Imprimir/Guardar PDF con CSS de impresión (solo se imprime la hoja). Sirve para los
+  386 importados y los nuevos.
+- **Ficha de cliente enriquecida:** resumen operativo con contratos, próximas visitas,
+  últimos certificados, últimos movimientos y layouts del cliente (las pestañas clave
+  de la ficha v1 de 13 pestañas), todo enlazado a sus módulos.
+- **Flujo de facturación:** `/comercial/[id]` detalle de movimiento con avance de
+  estado en un clic (cotizado→aprobado→facturado→pagado, rechazar/reabrir), edición
+  completa, DTE y OTs enlazadas visibles, eliminar con confirmación (cascade verificado).
+  Filas de la lista enlazadas.
+
+**Fix propio detectado en revisión:** guardar una OT terminada borraba la asignación
+del técnico (el selector deshabilitado no se envía) — corregido conservando la
+asignación histórica.
+
+**Pendiente Fase 3 restante:** captura móvil en terreno (check-in/firma del cliente/fotos),
+guardado del PDF en Storage + envío por correo, editor visual de layouts, QR de verificación.

@@ -1,9 +1,21 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, Mail, MapPin, Phone, Trash2 } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronLeft,
+  FileCheck2,
+  FileText,
+  LayoutTemplate,
+  Mail,
+  MapPin,
+  Phone,
+  Receipt,
+  Trash2,
+} from "lucide-react";
 
 import { requireEnabledProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { santiagoDate, santiagoTime } from "@/lib/datetime";
 import {
   deleteBranch,
   deleteClient,
@@ -43,7 +55,17 @@ export default async function ClienteDetallePage({
 
   if (!client) notFound();
 
-  const [{ data: branches }, { data: contacts }] = await Promise.all([
+  const nowISO = new Date().toISOString();
+  const [
+    { data: branches },
+    { data: contacts },
+    { data: contracts },
+    { data: proximas },
+    { data: certs },
+    { data: layouts },
+    { data: movs },
+    typesRes,
+  ] = await Promise.all([
     supabase
       .from("branches")
       .select("id, name, address")
@@ -57,10 +79,47 @@ export default async function ClienteDetallePage({
       .eq("client_id", id)
       .order("orden")
       .order("name"),
+    supabase
+      .from("contracts")
+      .select("id, frequency, status, current_price, service_type_id")
+      .eq("client_id", id)
+      .order("status")
+      .limit(20),
+    supabase
+      .from("services")
+      .select("id, scheduled_at, field_status")
+      .eq("client_id", id)
+      .gte("scheduled_at", nowISO)
+      .order("scheduled_at")
+      .limit(5),
+    supabase
+      .from("certificates")
+      .select("id, folio, issued_at")
+      .eq("client_id", id)
+      .order("folio", { ascending: false })
+      .limit(5),
+    supabase
+      .from("layouts")
+      .select("id, name, branch_id")
+      .eq("client_id", id)
+      .limit(10),
+    supabase
+      .from("movements")
+      .select("id, date, amount, status")
+      .eq("client_id", id)
+      .order("date", { ascending: false })
+      .limit(5),
+    supabase.from("service_types").select("id, name"),
   ]);
 
   const branchList = branches ?? [];
   const contactList = contacts ?? [];
+  const typeName = new Map((typesRes.data ?? []).map((t) => [t.id, t.name]));
+  const clp = new Intl.NumberFormat("es-CL", {
+    style: "currency",
+    currency: "CLP",
+    maximumFractionDigits: 0,
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -72,6 +131,122 @@ export default async function ClienteDetallePage({
           </Link>
         </Button>
         <h1 className="text-2xl font-semibold tracking-tight">{client.name}</h1>
+      </div>
+
+      {/* Resumen operativo (pestañas clave de la ficha v1) */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Contratos */}
+        <div className="bg-card rounded-xl border p-4">
+          <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold">
+            <FileText className="text-primary size-4" aria-hidden />
+            Contratos ({(contracts ?? []).length})
+          </h2>
+          {(contracts ?? []).length === 0 ? (
+            <p className="text-muted-foreground text-sm">Sin contratos registrados.</p>
+          ) : (
+            <ul className="divide-y text-sm">
+              {(contracts ?? []).map((ct) => (
+                <li key={ct.id} className="flex items-center justify-between gap-2 py-1.5">
+                  <span>
+                    {typeName.get(ct.service_type_id) ?? "Servicio"}
+                    {ct.frequency ? ` · ${ct.frequency}` : ""}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {ct.current_price ? clp.format(ct.current_price) : ""}{" "}
+                    <Badge variant={ct.status === "vigente" ? "success" : "muted"}>{ct.status}</Badge>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Próximas visitas */}
+        <div className="bg-card rounded-xl border p-4">
+          <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold">
+            <CalendarDays className="text-primary size-4" aria-hidden />
+            Próximas visitas
+          </h2>
+          {(proximas ?? []).length === 0 ? (
+            <p className="text-muted-foreground text-sm">Sin visitas agendadas a futuro.</p>
+          ) : (
+            <ul className="divide-y text-sm">
+              {(proximas ?? []).map((s) => (
+                <li key={s.id} className="py-1.5">
+                  <Link href={`/ordenes/${s.id}`} className="hover:text-primary flex justify-between gap-2 hover:underline">
+                    <span>
+                      {s.scheduled_at
+                        ? `${santiagoDate(s.scheduled_at)} ${santiagoTime(s.scheduled_at)}`
+                        : "(sin fecha)"}
+                    </span>
+                    <span className="text-muted-foreground">{s.field_status}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Certificados */}
+        <div className="bg-card rounded-xl border p-4">
+          <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold">
+            <FileCheck2 className="text-primary size-4" aria-hidden />
+            Últimos certificados
+          </h2>
+          {(certs ?? []).length === 0 ? (
+            <p className="text-muted-foreground text-sm">Sin certificados emitidos.</p>
+          ) : (
+            <ul className="divide-y text-sm">
+              {(certs ?? []).map((c) => (
+                <li key={c.id} className="py-1.5">
+                  <Link href={`/terreno/${c.id}`} className="hover:text-primary flex justify-between gap-2 hover:underline">
+                    <span className="font-medium">Folio {c.folio}</span>
+                    <span className="text-muted-foreground">
+                      {c.issued_at ? santiagoDate(c.issued_at) : ""}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Facturación + layouts */}
+        <div className="bg-card rounded-xl border p-4">
+          <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold">
+            <Receipt className="text-primary size-4" aria-hidden />
+            Últimos movimientos
+          </h2>
+          {(movs ?? []).length === 0 ? (
+            <p className="text-muted-foreground text-sm">Sin movimientos.</p>
+          ) : (
+            <ul className="divide-y text-sm">
+              {(movs ?? []).map((m) => (
+                <li key={m.id} className="py-1.5">
+                  <Link href={`/comercial/${m.id}`} className="hover:text-primary flex justify-between gap-2 hover:underline">
+                    <span>
+                      {m.date} · <span className="text-muted-foreground">{m.status}</span>
+                    </span>
+                    <span className={m.amount < 0 ? "text-destructive font-medium" : "font-medium"}>
+                      {clp.format(m.amount)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          {(layouts ?? []).length > 0 && (
+            <p className="text-muted-foreground mt-2 border-t pt-2 text-xs">
+              <LayoutTemplate className="mr-1 inline size-3.5" aria-hidden />
+              {(layouts ?? []).length} {(layouts ?? []).length === 1 ? "layout" : "layouts"} de este
+              cliente en{" "}
+              <Link href="/layouts" className="text-primary underline">
+                Layouts
+              </Link>
+              .
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Datos del cliente */}

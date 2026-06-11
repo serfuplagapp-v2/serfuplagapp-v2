@@ -306,6 +306,9 @@ export interface Database {
           field_status: ServiceFieldStatus;
           notes: string | null;
           completed_at: string | null;
+          legacy_id: string | null;
+          legacy_data: Json | null;
+          field_data: Json;
           created_at: string;
           updated_at: string;
         };
@@ -332,6 +335,7 @@ export interface Database {
           field_status?: ServiceFieldStatus;
           notes?: string | null;
           completed_at?: string | null;
+          field_data?: Json;
         };
         Relationships: [];
       };
@@ -750,6 +754,7 @@ export interface Database {
     Functions: {
       current_tenant_id: { Args: Record<never, never>; Returns: string };
       current_user_role: { Args: Record<never, never>; Returns: UserRole };
+      next_cert_folio: { Args: Record<never, never>; Returns: number };
       movements_summary: {
         Args: {
           p_from?: string | null;

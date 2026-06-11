@@ -111,10 +111,22 @@ La **fuente de verdad** está en `docs/` (léela antes de escribir código):
   `/layouts`=galería (NUNCA seleccionar bg_image en listas), `/stock`=catálogos.
   Tooling: migration/*-fase3*.mjs. Pruebas de Carlos: borrar registros "PRUEBA".
 
+- **Detalle OT + certificados nuevos + ficha + facturación (11-jun, 4ª sesión):**
+  migr. **0012** (`services.field_data` jsonb + `next_cert_folio()` atómica, probada).
+  `/ordenes/[id]` = detalle/edición OT réplica v1 (tipo_visita 7 valores v1, plagas chips,
+  productos filas dinámicas, firmante, vigencia; cerrar OT → folio atómico → certificado →
+  terminada; eliminar solo planificada/asignada). `/terreno/[id]` = certificado imprimible
+  réplica plantilla v1 (datos legales de tenant_settings, tabla productos enriquecida del
+  catálogo, leyenda penal, window.print con CSS de impresión). Ficha cliente con resumen
+  operativo (contratos/visitas/certs/movimientos/layouts). `/comercial/[id]` = detalle
+  movimiento con avance de estado, edición, DTE/OTs enlazadas, eliminar.
+  OJO: en OTs terminadas el form deshabilita técnico/fecha — la action NO debe tocar la
+  asignación en ese caso (bug ya corregido, no reintroducir).
+
 - **PENDIENTE (lo próximo, en orden):**
-  1. **Fase 3 — Terreno**: captura en terreno + generar el certificado PDF con folio
-     correlativo desde **30.698** (`tenant_settings.cert_next_folio`; firma y datos
-     legales en `tenant_settings.data`) + editor de layouts/estaciones.
+  1. **Fase 3 restante — Terreno móvil**: captura en terreno (check-in GPS, firma del
+     cliente en canvas, fotos), PDF a Storage + envío por correo, editor visual de
+     layouts/estaciones, QR de verificación pública.
   2. Seguir el roadmap de paridad (SII/Portal, CRM, cartola, RR.HH., IA-UV — ver `docs/06`).
   3. **Limpiezas/tareas de Carlos:** crear técnicos en `/tecnicos`; borrar test `dasda` + clientes
      duplicados (Globe ×3, El Gran Corte ×2…), 2 RUT sin DV (Educain, El Gran Corte), RUT de ABINGRAF;

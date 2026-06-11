@@ -325,17 +325,21 @@ export default async function OrdenesPage({
                 return (
                   <TableRow key={s.id}>
                     <TableCell className="text-muted-foreground whitespace-nowrap tabular-nums">
-                      {s.folio ?? "—"}
+                      <Link href={`/ordenes/${s.id}`} className="hover:text-primary hover:underline">
+                        {s.folio ?? "—"}
+                      </Link>
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
-                      {s.scheduled_at ? (
-                        <>
-                          <span className="font-medium">{santiagoDate(s.scheduled_at)}</span>{" "}
-                          <span className="text-muted-foreground">{santiagoTime(s.scheduled_at)}</span>
-                        </>
-                      ) : (
-                        "—"
-                      )}
+                      <Link href={`/ordenes/${s.id}`} className="hover:text-primary">
+                        {s.scheduled_at ? (
+                          <>
+                            <span className="font-medium hover:underline">{santiagoDate(s.scheduled_at)}</span>{" "}
+                            <span className="text-muted-foreground">{santiagoTime(s.scheduled_at)}</span>
+                          </>
+                        ) : (
+                          "—"
+                        )}
+                      </Link>
                     </TableCell>
                     <TableCell className="max-w-52 truncate font-medium">
                       <Link
